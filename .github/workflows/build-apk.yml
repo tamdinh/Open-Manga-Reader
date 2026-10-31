@@ -63,11 +63,23 @@ jobs:
       - name: Build APKs per ABI (split-per-abi)
         run: flutter build apk --release --split-per-abi
 
+      - name: Rename APKs to openmanga-<abi>.apk
+        run: |
+          cd build/app/outputs/flutter-apk
+          for apk in app-*-release.apk; do
+            if [ -f "$apk" ]; then
+              # app-arm64-v8a-release.apk -> openmanga-arm64-v8a.apk
+              new_name=$(echo "$apk" | sed -e 's/^app-/openmanga-/' -e 's/-release\.apk$/.apk/')
+              mv "$apk" "$new_name"
+              echo "Renamed $apk to $new_name"
+            fi
+          done
+
       - name: Upload APKs as Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-apks
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/openmanga-*.apk
           if-no-files-found: error
 
       - name: Send APKs to Telegram
@@ -79,7 +91,7 @@ jobs:
         run: |
           CAPTION="✅ *Build thành công!*%0A📱 *App:* Open-Manga-Reader%0A🌿 *Branch:* \`${{ github.ref_name }}\`%0A🔖 *Commit:* \`${{ github.sha }}\`%0A📝 *Message:* ${COMMIT_MSG}"
 
-          for apk in build/app/outputs/flutter-apk/*.apk; do
+          for apk in build/app/outputs/flutter-apk/openmanga-*.apk; do
             filename=$(basename "$apk")
             echo "Sending $filename to Telegram..."
             curl -s -F chat_id="${TELEGRAM_CHAT_ID}" \
@@ -93,6 +105,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/app/outputs/flutter-apk/*.apk
+          files: build/app/outputs/flutter-apk/openmanga-*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
