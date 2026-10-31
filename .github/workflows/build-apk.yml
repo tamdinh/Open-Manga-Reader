@@ -70,6 +70,25 @@ jobs:
           path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
 
+      - name: Send APKs to Telegram
+        if: env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          CAPTION="✅ *Build thành công!*%0A📱 *App:* Open-Manga-Reader%0A🌿 *Branch:* \`${{ github.ref_name }}\`%0A🔖 *Commit:* \`${{ github.sha }}\`%0A📝 *Message:* ${COMMIT_MSG}"
+
+          for apk in build/app/outputs/flutter-apk/*.apk; do
+            filename=$(basename "$apk")
+            echo "Sending $filename to Telegram..."
+            curl -s -F chat_id="${TELEGRAM_CHAT_ID}" \
+                    -F document=@"$apk" \
+                    -F caption="📦 $filename%0A$CAPTION" \
+                    -F parse_mode="Markdown" \
+                    "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+          done
+
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
