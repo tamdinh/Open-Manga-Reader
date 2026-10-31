@@ -32,17 +32,21 @@ jobs:
           cache: true
 
       - name: Restore or create .env
+        env:
+          ENV_CONTENT: ${{ secrets.ENV_FILE }}
         run: |
-          if [ -n "${{ secrets.ENV_FILE }}" ]; then
-            echo "${{ secrets.ENV_FILE }}" > .env
+          if [ -n "$ENV_CONTENT" ]; then
+            printf '%s\n' "$ENV_CONTENT" > .env
           elif [ -f .env.example ]; then
             cp .env.example .env
           fi
 
-      - name: Restore google-services.json (if provided)
+      - name: Restore google-services.json
+        env:
+          GOOGLE_SERVICES_CONTENT: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          if [ -n "${{ secrets.GOOGLE_SERVICES_JSON }}" ]; then
-            echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > android/app/google-services.json
+          if [ -n "$GOOGLE_SERVICES_CONTENT" ]; then
+            printf '%s\n' "$GOOGLE_SERVICES_CONTENT" > android/app/google-services.json
           fi
 
       - name: Install dependencies
