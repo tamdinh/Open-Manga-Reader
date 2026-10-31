@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -454,9 +455,27 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                     } catch (e) {
                                       _controller.clearScrapingProgress();
                                       if (context.mounted) {
+                                        String message = 'Failed to scrap chapters';
+                                        if (e is DioException) {
+                                          if (e.response?.statusCode == 401) {
+                                            message = 'Please sign in to scrape chapters';
+                                          } else if (e.response?.statusCode == 403) {
+                                            message = 'You do not have permission to scrape chapters';
+                                          } else if (e.response?.statusCode == 429) {
+                                            message = 'Scraping rate limit reached. Please wait a moment.';
+                                          } else if (e.response?.data is Map) {
+                                            final data = e.response!.data as Map;
+                                            final detail = data['detail'] ?? data['message'] ?? data['title'];
+                                            if (detail != null && detail.toString().trim().isNotEmpty) {
+                                              message = 'Failed to scrap chapters: $detail';
+                                            }
+                                          } else if (e.message != null && e.message!.trim().isNotEmpty) {
+                                            message = 'Failed to scrap chapters: ${e.message}';
+                                          }
+                                        }
                                         AlertBanner.show(
                                           context,
-                                          'Failed to scrap chapters: $e',
+                                          message,
                                           type: AlertBannerType.error,
                                         );
                                       }
