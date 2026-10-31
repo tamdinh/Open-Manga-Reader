@@ -130,4 +130,16 @@ class ApiConfigManager {
     await setActiveApiId(configs.first.id);
     return configs.first;
   }
+
+  static Future<void> ensureDefaultConfig() async {
+    final configs = await loadApiConfigs();
+    if (configs.isNotEmpty) return;
+    final defaultConfig = ApiConfig(
+      id: 'default',
+      name: 'Open Manga',
+      baseUrl: 'https://manga.tekkid.com',
+      isDefault: true,
+    );
+    await addApiConfig(defaultConfig);
+  }
 }

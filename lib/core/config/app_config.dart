@@ -21,6 +21,7 @@ class AppConfig {
 
   static Future<void> init() async {
     try {
+      await ApiConfigManager.ensureDefaultConfig();
       final activeConfig = await ApiConfigManager.getActiveApiConfig();
       if (activeConfig != null && activeConfig.baseUrl.trim().isNotEmpty) {
         baseUrl = activeConfig.baseUrl;
