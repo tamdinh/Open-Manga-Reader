@@ -1,4 +1,4 @@
-package com.example.my_manga_reader
+package com.tekkid.openmanga
 
 import io.flutter.embedding.android.FlutterActivity
 

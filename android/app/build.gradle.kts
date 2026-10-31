@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.my_manga_reader"
+    namespace = "com.tekkid.openmanga"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.my_manga_reader"
+        applicationId = "com.tekkid.openmanga"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
