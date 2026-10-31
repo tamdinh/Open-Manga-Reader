@@ -432,12 +432,14 @@ class MangaApiService {
     int limit = 20,
     CancelToken? cancelToken,
   }) async {
+    if (categories == null || categories.isEmpty) {
+      return [];
+    }
     try {
       final response = await _dio.get(
         '/api/v1/manga/similar/by-category',
         queryParameters: {
-          if (categories != null && categories.isNotEmpty)
-            'categories': categories,
+          'categories': categories,
           if (status != null && status.isNotEmpty) 'status': status,
           if (type != null && type.isNotEmpty) 'type': type,
           if (genres != null && genres.isNotEmpty) 'genres': genres,
@@ -454,6 +456,11 @@ class MangaApiService {
       return items
           .map((json) => MangaSummary.fromJson(json as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        return [];
+      }
+      rethrow;
     } catch (e) {
       rethrow;
     }
@@ -485,6 +492,11 @@ class MangaApiService {
       return items
           .map((json) => MangaSummary.fromJson(json as Map<String, dynamic>))
           .toList();
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 400) {
+        return [];
+      }
+      rethrow;
     } catch (e) {
       rethrow;
     }

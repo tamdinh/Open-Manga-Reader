@@ -541,7 +541,7 @@ class MangaDetailController extends ChangeNotifier {
       _recommendations = recs;
     } catch (e) {
       if (e is DioException && e.type == DioExceptionType.cancel) return;
-      _recommendationErrorMessage = e.toString();
+      _recommendationErrorMessage = _formatErrorMessage(e);
     } finally {
       _isLoadingRecommendations = false;
       notifyListeners();
@@ -644,7 +644,12 @@ class MangaDetailController extends ChangeNotifier {
       _similarByCategory = results;
     } catch (e) {
       if (e is DioException && e.type == DioExceptionType.cancel) return;
-      _similarByCategoryErrorMessage = e.toString();
+      if (e is DioException && e.response?.statusCode == 400) {
+        _similarByCategory = [];
+        _similarByCategoryErrorMessage = null;
+        return;
+      }
+      _similarByCategoryErrorMessage = _formatErrorMessage(e);
     } finally {
       _isLoadingSimilarByCategory = false;
       notifyListeners();
@@ -783,5 +788,21 @@ class MangaDetailController extends ChangeNotifier {
       url: manga.url,
       chapters: chapters,
     );
+  }
+
+  String _formatErrorMessage(dynamic e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map) {
+        final detail = data['detail'] ?? data['message'] ?? data['title'];
+        if (detail != null && detail.toString().trim().isNotEmpty) {
+          return detail.toString();
+        }
+      }
+      if (e.message != null && e.message!.trim().isNotEmpty) {
+        return e.message!;
+      }
+    }
+    return e.toString();
   }
 }
