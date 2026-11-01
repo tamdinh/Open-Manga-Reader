@@ -46,7 +46,9 @@ void main() async {
 
   // Initialize FCM Notification Service
   if (NotificationService.isSupported) {
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    if (!kIsWeb) {
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    }
     await getIt<NotificationService>().init();
   }
 

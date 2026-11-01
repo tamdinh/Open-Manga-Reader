@@ -428,13 +428,13 @@ class _AppUpdateDialogState extends State<AppUpdateDialog> {
                     child: ElevatedButton.icon(
                       onPressed: _startDownloadAndInstall,
                       icon: Icon(
-                        Platform.isAndroid && _downloadUrl != null
+                        !kIsWeb && Platform.isAndroid && _downloadUrl != null
                             ? Icons.download_rounded
                             : Icons.open_in_browser_rounded,
                         size: 18,
                       ),
                       label: Text(
-                        Platform.isAndroid && _downloadUrl != null
+                        !kIsWeb && Platform.isAndroid && _downloadUrl != null
                             ? 'Update Now'
                             : 'Open Browser',
                         style: const TextStyle(fontWeight: FontWeight.bold),

@@ -50,7 +50,7 @@ class _ReaderStatusBarInfoState extends State<ReaderStatusBarInfo> {
             _batteryLevel = level;
           });
         }
-      });
+      }, onError: (_) {});
     } catch (_) {
       // Platform may not support battery querying (e.g. desktop/web without sensors)
     }

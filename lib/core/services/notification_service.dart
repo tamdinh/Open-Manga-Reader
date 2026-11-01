@@ -42,7 +42,7 @@ class NotificationService {
   String? _pendingMangaIdToNavigate;
 
   static bool get isSupported {
-    if (kIsWeb) return true;
+    if (kIsWeb) return false;
     return Platform.isAndroid || Platform.isIOS || Platform.isMacOS;
   }
 
@@ -130,6 +130,8 @@ class NotificationService {
         FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('Received foreground FCM message: ${message.messageId}');
       _showLocalNotification(message);
+    }, onError: (e) {
+      debugPrint('Error on FCM onMessage: $e');
     });
 
     // 2. Background FCM messages clicked by user
@@ -137,6 +139,8 @@ class NotificationService {
         FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       debugPrint('App opened from background FCM message: ${message.data}');
       _handleRemoteMessageClick(message);
+    }, onError: (e) {
+      debugPrint('Error on FCM onMessageOpenedApp: $e');
     });
 
     // 3. Token refresh listener
@@ -144,6 +148,8 @@ class NotificationService {
         _messaging!.onTokenRefresh.listen((newToken) async {
       debugPrint('FCM Token refreshed: $newToken');
       await _registerTokenWithBackend(newToken);
+    }, onError: (e) {
+      debugPrint('Error on FCM onTokenRefresh: $e');
     });
   }
 

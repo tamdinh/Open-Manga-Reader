@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -75,17 +77,27 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
   StreamSubscription<Uri>? _linkSubscription;
   StreamSubscription<User?>? _authSubscription;
 
+  bool get _isDesktop =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+
   @override
   void initState() {
     super.initState();
-    protocolHandler.addListener(this);
+    if (_isDesktop) {
+      protocolHandler.addListener(this);
+    }
     _initDeepLinks();
     _checkAuthState();
   }
 
   @override
   void dispose() {
-    protocolHandler.removeListener(this);
+    if (_isDesktop) {
+      protocolHandler.removeListener(this);
+    }
     _linkSubscription?.cancel();
     _authSubscription?.cancel();
     super.dispose();
@@ -105,25 +117,46 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
   Future<void> _initDeepLinks() async {
     _appLinks = AppLinks();
 
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      _handleDeepLink(uri);
-    });
+    _linkSubscription = _appLinks.uriLinkStream.listen(
+      (uri) {
+        _handleDeepLink(uri);
+      },
+      onError: (err) {
+        debugPrint('AppLinks stream error: $err');
+      },
+    );
 
-    final initialUri = await _appLinks.getInitialLink();
-    if (initialUri != null) {
-      _handleDeepLink(initialUri);
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      debugPrint('Error getting initial app link: $e');
     }
 
-    final initialProtocolUrl = await protocolHandler.getInitialUrl();
-    if (initialProtocolUrl != null && initialProtocolUrl.isNotEmpty) {
-      final uri = Uri.tryParse(initialProtocolUrl);
-      if (uri != null) {
-        _handleDeepLink(uri);
+    if (_isDesktop) {
+      try {
+        final initialProtocolUrl = await protocolHandler.getInitialUrl();
+        if (initialProtocolUrl != null && initialProtocolUrl.isNotEmpty) {
+          final uri = Uri.tryParse(initialProtocolUrl);
+          if (uri != null) {
+            _handleDeepLink(uri);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error getting initial protocol URL: $e');
       }
     }
   }
 
   Future<void> _handleDeepLink(Uri uri) async {
+    if ((uri.scheme == 'http' || uri.scheme == 'https') &&
+        (uri.path.isEmpty || uri.path == '/') &&
+        uri.queryParameters.isEmpty) {
+      return;
+    }
+
     debugPrint(
       'Received deep link: $uri (scheme: ${uri.scheme}, host: ${uri.host}, path: ${uri.path}, segments: ${uri.pathSegments})',
     );

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class UrlUtils {
   /// Determines whether the given string represents a local file path.
@@ -21,7 +22,7 @@ class UrlUtils {
 
     if (clean.startsWith('file://')) {
       try {
-        clean = Uri.parse(clean).toFilePath(windows: Platform.isWindows);
+        clean = Uri.parse(clean).toFilePath(windows: !kIsWeb && Platform.isWindows);
       } catch (_) {
         clean = clean.replaceFirst('file://', '');
       }
@@ -37,7 +38,7 @@ class UrlUtils {
       } catch (_) {}
     }
 
-    if (Platform.isWindows) {
+    if (!kIsWeb && Platform.isWindows) {
       // If it starts with /C: or /D: from URI parsing, strip leading slash
       if (RegExp(r'^\/[a-zA-Z]:').hasMatch(clean)) {
         clean = clean.substring(1);
