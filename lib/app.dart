@@ -176,7 +176,7 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
         (User? user) async {
           if (mounted) {
             if (user != null) {
-              await _checkApiConfiguration();
+              await _checkApiConfiguration(user: user);
             } else {
               setState(() {
                 _isCheckingAuth = false;
@@ -209,7 +209,7 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
     }
   }
 
-  Future<void> _checkApiConfiguration() async {
+  Future<void> _checkApiConfiguration({User? user}) async {
     try {
       final configs = await ApiConfigManager.loadApiConfigs();
       final activeConfig = await ApiConfigManager.getActiveApiConfig();
@@ -232,6 +232,11 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
 
           // Synchronize FCM Token with backend for authenticated session
           getIt<NotificationService>().syncFcmToken();
+
+          // Ensure backend session and heartbeat if Firebase user is authenticated
+          if (user != null) {
+            _authService.ensureBackendSession(user);
+          }
 
           if (_pendingDeepLink != null) {
             final link = _pendingDeepLink!;

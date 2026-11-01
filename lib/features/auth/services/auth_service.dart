@@ -50,6 +50,17 @@ class AuthService {
     ]);
   }
 
+  Future<void> ensureBackendSession(User user) async {
+    try {
+      final idToken = await user.getIdToken();
+      if (idToken != null) {
+        await _handlePostLogin(idToken);
+      }
+    } catch (e) {
+      debugPrint('ensureBackendSession error: $e');
+    }
+  }
+
   Future<User?> signInWithGoogle() async {
     try {
       if (kIsWeb) {

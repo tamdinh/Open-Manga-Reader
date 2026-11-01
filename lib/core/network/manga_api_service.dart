@@ -207,7 +207,21 @@ class MangaApiService {
     });
   }
 
+  Future<void>? _ongoingLoginFuture;
+
   Future<void> loginWithFirebase(String idToken) async {
+    if (_ongoingLoginFuture != null) {
+      return _ongoingLoginFuture;
+    }
+    _ongoingLoginFuture = _performLoginWithFirebase(idToken);
+    try {
+      await _ongoingLoginFuture;
+    } finally {
+      _ongoingLoginFuture = null;
+    }
+  }
+
+  Future<void> _performLoginWithFirebase(String idToken) async {
     try {
       final response = await _dio.post(
         '/api/v1/auth/firebase',

@@ -24,7 +24,7 @@ Open Manga Reader is a modern, cross-platform manga reading application built wi
 - **☁️ Cloud Sync & Offline-First**: Local storage paired with seamless cloud synchronization, debounced updates, and queued offline mutations.
 - **📈 Progression Tracking**: Real-time chapter reading time tracking, progress history, and statistics.
 - **🔔 Push Notifications & Library Topic Sync**: Firebase Cloud Messaging (FCM) integration with automated backend device token registration (`/api/v1/users/fcm-token`), library-based topic subscription (`manga_{mangaId}`), and deep routing directly to manga details on new chapter releases.
-- **🔐 Secure Authentication**: Firebase Auth with Google Sign-In support across Mobile, Web, and Desktop (PKCE OAuth with custom loopback).
+- **🔐 Secure Authentication**: Firebase Auth with Google Sign-In support across Mobile, Web, and Desktop (PKCE OAuth with custom loopback), automated cold-start backend session synchronization, and single-flight token refresh deduplication.
 - **🌘 Dynamic Themes**: Curated light and dark modes adhering to modern design aesthetics.
 - **⚙️ Custom API Management**: Dynamically switch and configure backend API endpoints with connection testing.
 
