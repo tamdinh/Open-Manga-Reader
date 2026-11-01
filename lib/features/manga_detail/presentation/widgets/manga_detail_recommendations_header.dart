@@ -59,7 +59,7 @@ class MangaDetailRecommendationsHeader extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'Similar Manga',
+                  'You May Also Like',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
