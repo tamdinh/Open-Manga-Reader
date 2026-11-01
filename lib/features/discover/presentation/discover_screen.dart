@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/alert_banner.dart';
 import '../../../core/widgets/discover_card.dart';
 import '../../../core/models/manga_summary.dart';
 import '../../../core/network/manga_api_service.dart';
@@ -99,6 +100,14 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   }
 
   void _onShowQueue() {
+    if (!_apiService.canScrap) {
+      AlertBanner.show(
+        context,
+        'Chức năng kiểm tra hàng đợi chỉ dành cho Quản trị viên và người vận hành hệ thống.',
+        type: AlertBannerType.warning,
+      );
+      return;
+    }
     showDialog(
       context: context,
       builder: (context) => const ScrapQueueDialog(),
@@ -106,6 +115,14 @@ class _DiscoverScreenState extends State<DiscoverScreen>
   }
 
   void _onSearchScrapSource() {
+    if (!_apiService.canScrap) {
+      AlertBanner.show(
+        context,
+        'Chức năng cào truyện chỉ dành cho Quản trị viên và người vận hành hệ thống.',
+        type: AlertBannerType.warning,
+      );
+      return;
+    }
     Navigator.pushNamed(context, AppRoutes.searchScrap);
   }
 
@@ -403,6 +420,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
                             onSearch: _controller.onSearchChanged,
                             onShowQueue: _onShowQueue,
                             onSearchScrapSource: _onSearchScrapSource,
+                            canScrap: _apiService.canScrap,
                             onFilter: _onFilter,
                             onAdvancedRecommendation: () =>
                                 Navigator.pushNamed(

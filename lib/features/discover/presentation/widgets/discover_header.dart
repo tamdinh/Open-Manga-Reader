@@ -12,6 +12,7 @@ class DiscoverHeader extends StatefulWidget {
   final bool hasFilters;
   final bool isSemanticSearch;
   final ValueChanged<bool> onSemanticSearchChanged;
+  final bool canScrap;
 
   const DiscoverHeader({
     super.key,
@@ -24,6 +25,7 @@ class DiscoverHeader extends StatefulWidget {
     this.hasFilters = false,
     this.isSemanticSearch = false,
     required this.onSemanticSearchChanged,
+    this.canScrap = false,
   });
 
   @override
@@ -100,11 +102,13 @@ class _DiscoverHeaderState extends State<DiscoverHeader> {
                     icon: Icons.psychology_outlined,
                     isActive: widget.isSemanticSearch,
                   ),
-                  const SizedBox(width: 8),
-                  _buildHeaderIconButton(
-                    onPressed: widget.onSearchScrapSource,
-                    icon: Icons.cloud_sync_outlined,
-                  ),
+                  if (widget.canScrap) ...[
+                    const SizedBox(width: 8),
+                    _buildHeaderIconButton(
+                      onPressed: widget.onSearchScrapSource,
+                      icon: Icons.cloud_sync_outlined,
+                    ),
+                  ],
                   const SizedBox(width: 8),
                 ],
               ),

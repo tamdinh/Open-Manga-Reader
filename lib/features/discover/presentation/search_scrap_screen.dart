@@ -44,8 +44,10 @@ class _SearchScrapScreenState extends State<SearchScrapScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProviders();
-    _searchController.addListener(_onSearchChanged);
+    if (_apiService.canScrap) {
+      _loadProviders();
+      _searchController.addListener(_onSearchChanged);
+    }
   }
 
   @override
@@ -388,6 +390,61 @@ class _SearchScrapScreenState extends State<SearchScrapScreen> {
     final shadowColor = isDarkMode
         ? Colors.white.withValues(alpha: 0.05)
         : Colors.black.withValues(alpha: 0.08);
+
+    if (!_apiService.canScrap) {
+      return Scaffold(
+        backgroundColor: backgroundColor,
+        appBar: AppBar(
+          backgroundColor: backgroundColor,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: textColor),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Text(
+            'Search From Source',
+            style: TextStyle(
+              color: textColor,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 64,
+                  color: AppColors.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Không có quyền truy cập',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Chức năng tìm kiếm và cào truyện từ các nguồn bên ngoài chỉ dành cho Quản trị viên và người vận hành hệ thống.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textColor.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final hasActiveFilters =
         (_selectedGenres != null && _selectedGenres!.isNotEmpty) ||

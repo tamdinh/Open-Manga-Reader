@@ -32,6 +32,15 @@ class _ScrapQueueDialogState extends State<ScrapQueueDialog> {
   }
 
   Future<void> _fetchQueue() async {
+    if (!apiService.canScrap) {
+      if (!mounted) return;
+      setState(() {
+        _error =
+            'Chức năng kiểm tra hàng đợi chỉ dành cho Quản trị viên và người vận hành hệ thống.';
+        _isLoading = false;
+      });
+      return;
+    }
     try {
       final rawData = await apiService.getScrapQueue();
       if (!mounted) return;

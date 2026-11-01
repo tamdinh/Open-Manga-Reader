@@ -434,6 +434,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                   onFilterChanged: _controller.setChapterFilter,
                                   onToggleSort: _controller.toggleSort,
                                   onSearchChanged: _controller.setSearchQuery,
+                                  canScrap: _apiService.canScrap,
                                   onDownloadChapters: () {
                                     MangaDownloadBottomSheet.show(
                                       context,
@@ -443,6 +444,14 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                     );
                                   },
                                   onScrapChapters: () async {
+                                    if (!_apiService.canScrap) {
+                                      AlertBanner.show(
+                                        context,
+                                        'Chức năng cào truyện chỉ dành cho Quản trị viên và người vận hành hệ thống.',
+                                        type: AlertBannerType.warning,
+                                      );
+                                      return;
+                                    }
                                     try {
                                       _controller.startScrapingFeedback();
                                       AlertBanner.show(
@@ -460,7 +469,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                           if (e.response?.statusCode == 401) {
                                             message = 'Please sign in to scrape chapters';
                                           } else if (e.response?.statusCode == 403) {
-                                            message = 'You do not have permission to scrape chapters';
+                                            message = 'Chức năng cào truyện chỉ dành cho Quản trị viên và người vận hành hệ thống.';
                                           } else if (e.response?.statusCode == 429) {
                                             message = 'Scraping rate limit reached. Please wait a moment.';
                                           } else if (e.response?.data is Map) {

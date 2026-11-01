@@ -19,6 +19,7 @@ class MangaApiService {
   static const String _userIdKey = 'auth_user_id';
   static const String _usernameKey = 'auth_username';
   static const String _expiryKey = 'auth_expiry';
+  static const String _rolesKey = 'auth_user_roles';
   static const String _deviceIdKey = 'app_device_id';
 
   final Dio _dio;
@@ -26,6 +27,7 @@ class MangaApiService {
   String? _userId;
   String? _username;
   String? _expiry;
+  List<String> _roles = [];
   String? _deviceId;
 
   List<String>? _cachedGenres;
@@ -37,6 +39,17 @@ class MangaApiService {
   String? get expiry => _expiry;
   String? get jwtToken => _jwtToken;
   String? get deviceId => _deviceId;
+  List<String> get roles => List.unmodifiable(_roles);
+
+  bool get canScrap => _roles.any((r) {
+        final lower = r.toLowerCase();
+        return lower == 'superuser' || lower == 'admin' || lower == 'operator';
+      });
+
+  bool get isAdmin => _roles.any((r) {
+        final lower = r.toLowerCase();
+        return lower == 'superuser' || lower == 'admin';
+      });
 
   MangaApiService()
     : _dio = Dio(
@@ -56,6 +69,7 @@ class MangaApiService {
     _userId = prefs.getString(_userIdKey);
     _username = prefs.getString(_usernameKey);
     _expiry = prefs.getString(_expiryKey);
+    _roles = prefs.getStringList(_rolesKey) ?? [];
     _deviceId = prefs.getString(_deviceIdKey);
     if (_deviceId == null || _deviceId!.isEmpty) {
       _deviceId = const Uuid().v4();
@@ -228,16 +242,25 @@ class MangaApiService {
         data: {'idToken': idToken},
       );
       final unwrapped = _unwrap(response.data);
+      dynamic rawRoles;
       if (unwrapped is Map<String, dynamic>) {
         _jwtToken = unwrapped['token'] as String?;
         _userId = unwrapped['userId'] as String?;
         _username = unwrapped['username'] as String?;
         _expiry = unwrapped['expiry'] as String?;
+        rawRoles = unwrapped['roles'];
       } else if (response.data is Map<String, dynamic>) {
         _jwtToken = response.data['token'] as String?;
         _userId = response.data['userId'] as String?;
         _username = response.data['username'] as String?;
         _expiry = response.data['expiry'] as String?;
+        rawRoles = response.data['roles'];
+      }
+
+      if (rawRoles is List) {
+        _roles = rawRoles.map((e) => e.toString()).toList();
+      } else {
+        _roles = [];
       }
 
       final prefs = await SharedPreferences.getInstance();
@@ -245,9 +268,28 @@ class MangaApiService {
       if (_userId != null) await prefs.setString(_userIdKey, _userId!);
       if (_username != null) await prefs.setString(_usernameKey, _username!);
       if (_expiry != null) await prefs.setString(_expiryKey, _expiry!);
+      await prefs.setStringList(_rolesKey, _roles);
     } catch (e) {
       rethrow;
     }
+  }
+
+  Future<void> fetchCurrentUserProfile() async {
+    if (_jwtToken == null || _jwtToken!.isEmpty) return;
+    try {
+      final response = await _dio.get('/api/v1/auth/me');
+      final unwrapped = _unwrap(response.data);
+      final data = unwrapped is Map<String, dynamic>
+          ? unwrapped
+          : (response.data is Map<String, dynamic>
+              ? response.data as Map<String, dynamic>
+              : null);
+      if (data != null && data['roles'] is List) {
+        _roles = (data['roles'] as List).map((e) => e.toString()).toList();
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setStringList(_rolesKey, _roles);
+      }
+    } catch (_) {}
   }
 
   Future<void> logout() async {
@@ -260,11 +302,13 @@ class MangaApiService {
       _userId = null;
       _username = null;
       _expiry = null;
+      _roles = [];
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_tokenKey);
       await prefs.remove(_userIdKey);
       await prefs.remove(_usernameKey);
       await prefs.remove(_expiryKey);
+      await prefs.remove(_rolesKey);
     }
   }
 
@@ -769,6 +813,26 @@ class MangaApiService {
   }
 
   Future<void> scrapChapterPagesNew(String mangaId) async {
+    if (!canScrap) {
+      throw DioException(
+        requestOptions: RequestOptions(
+          baseUrl: _dio.options.baseUrl,
+          path: '/api/v1/scrapper/manga/$mangaId/chapter-pages',
+        ),
+        response: Response(
+          requestOptions: RequestOptions(
+            baseUrl: _dio.options.baseUrl,
+            path: '/api/v1/scrapper/manga/$mangaId/chapter-pages',
+          ),
+          statusCode: 403,
+          data: {
+            'message':
+                'Chức năng cào truyện chỉ dành cho Quản trị viên và người vận hành hệ thống.'
+          },
+        ),
+        type: DioExceptionType.badResponse,
+      );
+    }
     try {
       await _dio.get('/api/v1/scrapper/manga/$mangaId/chapter-pages');
     } catch (e) {

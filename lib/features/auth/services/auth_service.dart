@@ -36,6 +36,7 @@ class AuthService {
 
   Future<void> _handlePostLogin(String idToken) async {
     await getIt<MangaApiService>().loginWithFirebase(idToken);
+    await getIt<MangaApiService>().fetchCurrentUserProfile();
     await getIt<NotificationService>().syncFcmToken();
     getIt<HeartbeatService>().start();
 

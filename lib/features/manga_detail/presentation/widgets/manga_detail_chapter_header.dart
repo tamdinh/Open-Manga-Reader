@@ -11,6 +11,7 @@ class MangaDetailChapterHeader extends StatefulWidget {
   final ValueChanged<String> onSearchChanged;
   final VoidCallback onScrapChapters;
   final VoidCallback? onDownloadChapters;
+  final bool canScrap;
 
   const MangaDetailChapterHeader({
     super.key,
@@ -21,6 +22,7 @@ class MangaDetailChapterHeader extends StatefulWidget {
     required this.onSearchChanged,
     required this.onScrapChapters,
     this.onDownloadChapters,
+    this.canScrap = false,
   });
 
   @override
@@ -146,18 +148,19 @@ class _MangaDetailChapterHeaderState extends State<MangaDetailChapterHeader> {
                     size: 20,
                   ),
                 ),
-                IconButton(
-                  tooltip: 'Scrape Chapters Online',
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    widget.onScrapChapters();
-                  },
-                  icon: Icon(
-                    Icons.cloud_download_outlined,
-                    color: colorScheme.primary,
-                    size: 20,
+                if (widget.canScrap)
+                  IconButton(
+                    tooltip: 'Scrape Chapters Online',
+                    onPressed: () {
+                      HapticFeedback.selectionClick();
+                      widget.onScrapChapters();
+                    },
+                    icon: Icon(
+                      Icons.cloud_download_outlined,
+                      color: colorScheme.primary,
+                      size: 20,
+                    ),
                   ),
-                ),
                 if (widget.onDownloadChapters != null)
                   IconButton(
                     tooltip: 'Download Chapters',
