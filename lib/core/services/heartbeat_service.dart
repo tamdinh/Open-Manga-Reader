@@ -56,6 +56,12 @@ class HeartbeatService with WidgetsBindingObserver {
     if (user != null) {
       try {
         final apiService = getIt<MangaApiService>();
+        if (apiService.jwtToken == null || apiService.userId == null) {
+          final idToken = await user.getIdToken();
+          if (idToken != null && idToken.isNotEmpty) {
+            await apiService.loginWithFirebase(idToken);
+          }
+        }
         if (apiService.jwtToken != null) {
           await apiService.patchUserHeartbeat();
         }
