@@ -371,23 +371,25 @@ class _MoreScreenState extends State<MoreScreen>
                     const SizedBox(height: 32),
 
                     _buildCategoryTitle('Settings'),
+                    if (_apiService.isAdmin)
+                      _buildMenuItem(
+                        context,
+                        icon: Icons.api_outlined,
+                        title: 'Base API Setting',
+                        onTap: () {
+                          if (!context.mounted) return;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const BaseApiSettingScreen(),
+                            ),
+                          );
+                        },
+                      ),
                     _buildMenuItem(
                       context,
-                  icon: Icons.api_outlined,
-                  title: 'Base API Setting',
-                  onTap: () {
-                    if (!context.mounted) return;
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const BaseApiSettingScreen(),
-                      ),
-                    );
-                  },
-                ),
-                _buildMenuItem(
-                  context,
-                  icon: Icons.palette_outlined,
+                      icon: Icons.palette_outlined,
                   title: 'Theme',
                   subtitle:
                       '${themeProvider.themeModeName} • ${themeProvider.currentScheme.name}',
