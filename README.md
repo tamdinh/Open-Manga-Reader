@@ -154,8 +154,8 @@ lib/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Skyleaft/open-manga-reader.git
-   cd open-manga-reader
+   git clone https://github.com/tamdinh/Open-Manga-Reader.git
+   cd Open-Manga-Reader
    ```
 
 2. **Install dependencies:**
@@ -179,6 +179,46 @@ lib/
    ```bash
    flutter run
    ```
+
+---
+
+## 🌐 Web Deployment (Cloudflare Pages)
+
+Open Manga Reader supports building and deploying as a Single-Page Application (SPA) on **Cloudflare Pages** (`open-manga-reader.pages.dev`).
+
+### 1. One-Click Deploy on Windows
+You can run the automated script directly:
+* **Double-click:** Run [`deploy-web.bat`](deploy-web.bat) in the project directory (or from the repository root).
+* **Or via PowerShell:**
+  ```powershell
+  .\deploy-web.ps1
+  ```
+  *(To deploy existing `build/web` without re-compiling: `.\deploy-web.ps1 -SkipBuild`)*
+
+### 2. Automated Deploy on Linux VPS
+The project includes a dedicated Linux deployment script [`deploy-web.sh`](deploy-web.sh) with automatic Docker container fallback (builds seamlessly even if Flutter SDK is not installed on the VPS host).
+
+1. **Set up Cloudflare API Token** (Headless SSH deployment):
+   ```bash
+   cp .env.deploy.example .env.deploy
+   nano .env.deploy
+   ```
+   Add your token:
+   ```env
+   CLOUDFLARE_API_TOKEN=your_cloudflare_api_token
+   ```
+2. **Execute Deployment:**
+   ```bash
+   ./deploy-web.sh
+   ```
+   *(To deploy existing `build/web` without re-compiling: `./deploy-web.sh --skip-build`)*
+
+### 3. SPA Routing Configuration
+Cloudflare Pages handles SPA client-side routes via [`web/_redirects`](web/_redirects):
+```text
+/*    /index.html   200
+```
+This file is automatically packaged into `build/web/_redirects` during the build step to ensure refreshing sub-routes does not cause 404 errors.
 
 ---
 
