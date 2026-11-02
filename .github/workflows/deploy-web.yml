@@ -56,6 +56,7 @@ jobs:
       - name: Deploy to Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '0583d4a5b3469cf89e54b33fd8d7f2a1' }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          npx wrangler pages deploy build/web --project-name=open-manga-reader --commit-dirty=true --account-id="${CLOUDFLARE_ACCOUNT_ID}"
+          export CLOUDFLARE_ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-0583d4a5b3469cf89e54b33fd8d7f2a1}"
+          npx wrangler pages deploy build/web --project-name=open-manga-reader --commit-dirty=true
