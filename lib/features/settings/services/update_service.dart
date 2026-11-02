@@ -171,6 +171,7 @@ class UpdateService {
   }
 
   Future<Map<String, dynamic>?> checkForUpdate() async {
+    if (kIsWeb) return null;
     final info = await getLatestReleaseInfo();
     if (info != null && info['hasUpdate'] == true) {
       return info;

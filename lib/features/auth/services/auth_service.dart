@@ -15,7 +15,7 @@ import 'google_desktop_auth.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  late final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   late final GoogleDesktopAuth _desktopAuth = GoogleDesktopAuth(
     clientId: dotenv.env['GOOGLE_DESKTOP_CLIENT_ID'] ??
