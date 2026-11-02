@@ -18,6 +18,11 @@ class LibraryService {
     // 2. Pre-cache cover and details in background
     getIt<LibraryCacheService>().cacheSingleManga(manga);
 
+    // If guest (not logged in), keep purely local
+    if (_currentUserId.isEmpty) {
+      return;
+    }
+
     // 3. Subscribe to FCM topic for chapter updates
     getIt<NotificationService>().subscribeToMangaTopic(manga.id);
 
@@ -44,6 +49,11 @@ class LibraryService {
     // 1. Update local cache immediately
     await _updateLocalCache(updated, isRemoving: false);
 
+    // If guest (not logged in), keep purely local
+    if (_currentUserId.isEmpty) {
+      return;
+    }
+
     // 2. Try API
     final apiService = getIt<MangaApiService>();
     final payload = updated.toApiRequest(_currentUserId);
@@ -62,6 +72,11 @@ class LibraryService {
 
     // 1. Update local cache immediately
     await _updateLocalCacheById(mangaId, isRemoving: true);
+
+    // If guest (not logged in), keep purely local
+    if (_currentUserId.isEmpty) {
+      return;
+    }
 
     // 2. Unsubscribe from FCM topic
     getIt<NotificationService>().unsubscribeFromMangaTopic(mangaId);
@@ -90,6 +105,11 @@ class LibraryService {
     // 1. Update local cache immediately
     await _updateLocalCache(updated, isRemoving: false);
 
+    // If guest (not logged in), keep purely local
+    if (_currentUserId.isEmpty) {
+      return;
+    }
+
     // 2. Try API
     final apiService = getIt<MangaApiService>();
     final payload = updated.toApiRequest(_currentUserId);
@@ -103,7 +123,9 @@ class LibraryService {
 
   Future<LibraryManga?> getLibraryManga(String mangaId) async {
     final localLibrary = await _loadFromLocalCache();
-    _syncLibraryItemFromApi(mangaId);
+    if (_currentUserId.isNotEmpty) {
+      _syncLibraryItemFromApi(mangaId);
+    }
     try {
       return localLibrary.firstWhere((m) => m.id == mangaId);
     } catch (_) {
@@ -120,8 +142,12 @@ class LibraryService {
     final apiService = getIt<MangaApiService>();
     final syncService = getIt<SyncService>();
 
-    // 1. Return local cache immediately for instant offline access
+    // 1. Return local cache immediately for instant offline / guest access
     final localLibrary = await _loadFromLocalCache();
+
+    if (_currentUserId.isEmpty) {
+      return localLibrary;
+    }
 
     final isStale = _lastSyncTime == null ||
         DateTime.now().difference(_lastSyncTime!) > _cacheTtl;
@@ -132,6 +158,10 @@ class LibraryService {
     }
 
     return localLibrary;
+  }
+
+  Future<void> syncGuestDataAndRefresh(String userId) async {
+    await refreshFromApi();
   }
 
   bool _isSyncing = false;
@@ -193,9 +223,14 @@ class LibraryService {
       // Check items that exist locally but NOT on server
       for (final local in localLibrary) {
         if (!apiMangaIds.contains(local.id)) {
-          if (pendingAddIds.contains(local.id)) {
-            // Added offline on this device, waiting to be synced to server
+          if (local.userLibraryId.isEmpty || pendingAddIds.contains(local.id)) {
+            // Added offline or as guest on this device -> sync to server!
             finalLibrary.add(local);
+            final payload = local.toApiRequest(userId);
+            apiService.addToUserLibrary(payload).catchError((_) {
+              syncService.enqueueAction('library_add', payload);
+              return <String, dynamic>{};
+            });
           } else {
             // Deleted from server (e.g. on Device A) -> remove from Hive
             try {

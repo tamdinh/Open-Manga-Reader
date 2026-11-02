@@ -46,8 +46,8 @@ class AuthService {
     }
 
     await Future.wait([
-      getIt<ProgressionService>().refreshFromApi(),
-      getIt<LibraryService>().refreshFromApi(),
+      getIt<ProgressionService>().syncGuestDataAndRefresh(userId ?? ''),
+      getIt<LibraryService>().syncGuestDataAndRefresh(userId ?? ''),
     ]);
   }
 

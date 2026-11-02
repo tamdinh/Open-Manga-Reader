@@ -67,7 +67,11 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = await _authService.signInWithGoogle();
       if (user != null) {
         if (mounted) {
-          Navigator.pushReplacementNamed(context, AppRoutes.home);
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context, true);
+          } else {
+            Navigator.pushReplacementNamed(context, AppRoutes.home);
+          }
         }
       } else {
         if (mounted) {
@@ -207,7 +211,44 @@ class _LoginScreenState extends State<LoginScreen> {
                     backgroundColor: isDark ? AppColors.slate800 : Colors.white,
                     textColor: isDark ? Colors.white : AppColors.slate800,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: _isLoading
+                          ? null
+                          : () {
+                              if (Navigator.canPop(context)) {
+                                Navigator.pop(context);
+                              } else {
+                                Navigator.pushReplacementNamed(
+                                  context,
+                                  AppRoutes.home,
+                                );
+                              }
+                            },
+                      icon: const Icon(Icons.menu_book_rounded, size: 20),
+                      label: const Text(
+                        "Continue as Guest",
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: isDark ? Colors.white70 : Colors.black87,
+                        side: BorderSide(
+                          color: (isDark ? Colors.white : Colors.black)
+                              .withValues(alpha: 0.2),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   TextButton.icon(
                     onPressed: () {
                       Navigator.pushNamed(context, AppRoutes.baseApiSetting);
@@ -255,6 +296,33 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          // Top Left Back Action Button
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                    tooltip: 'Back',
+                    onPressed: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacementNamed(context, AppRoutes.home);
+                      }
+                    },
+                  ),
+                ),
               ),
             ),
           ),

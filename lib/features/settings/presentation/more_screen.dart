@@ -358,16 +358,21 @@ class _MoreScreenState extends State<MoreScreen>
               parent: BouncingScrollPhysics(),
             ),
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(isDark, authService.currentUser),
-                _buildStatsCard(isDark),
-                const SizedBox(height: 32),
+            child: StreamBuilder<User?>(
+              stream: authService.authStateChanges,
+              initialData: authService.currentUser,
+              builder: (context, authSnapshot) {
+                final user = authSnapshot.data;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHeader(isDark, user),
+                    _buildStatsCard(isDark),
+                    const SizedBox(height: 32),
 
-                _buildCategoryTitle('Settings'),
-                _buildMenuItem(
-                  context,
+                    _buildCategoryTitle('Settings'),
+                    _buildMenuItem(
+                      context,
                   icon: Icons.api_outlined,
                   title: 'Base API Setting',
                   onTap: () {
@@ -582,10 +587,12 @@ class _MoreScreenState extends State<MoreScreen>
                 ),
 
                 const SizedBox(height: 32),
-                _buildFooter(context),
+                _buildFooter(context, user),
               ],
-            ),
-          ),
+            );
+          },
+        ),
+      ),
         ),
       ),
     );
@@ -1128,7 +1135,123 @@ class _MoreScreenState extends State<MoreScreen>
   }
 
   Widget _buildHeader(bool isDark, User? user) {
+    if (user == null) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 24),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            width: 1,
+          ),
+          boxShadow: isDark
+              ? []
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.person_outline_rounded,
+                    size: 28,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Guest Account',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'Local Storage',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Progression & library saved locally. Sign in to sync across devices.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white60 : Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.pushNamed(context, AppRoutes.login);
+                },
+                icon: const Icon(Icons.login_rounded, size: 18),
+                label: const Text(
+                  'Sign In to Sync',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
+      margin: const EdgeInsets.only(bottom: 24),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
@@ -1146,13 +1269,12 @@ class _MoreScreenState extends State<MoreScreen>
       child: Row(
         children: [
           CircleAvatar(
-            radius: 32,
+            radius: 30,
             backgroundColor: Theme.of(context).colorScheme.primary,
-            backgroundImage: user?.photoURL != null
-                ? NetworkImage(user!.photoURL!)
-                : null,
-            child: user?.photoURL == null
-                ? const Icon(Icons.person, size: 32, color: Colors.white)
+            backgroundImage:
+                user.photoURL != null ? NetworkImage(user.photoURL!) : null,
+            child: user.photoURL == null
+                ? const Icon(Icons.person, size: 30, color: Colors.white)
                 : null,
           ),
           const SizedBox(width: 16),
@@ -1160,17 +1282,57 @@ class _MoreScreenState extends State<MoreScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  user?.displayName ?? 'Username',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        user.displayName ?? 'Reader',
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.cloud_done_rounded,
+                            size: 12,
+                            color: Colors.green,
+                          ),
+                          SizedBox(width: 3),
+                          Text(
+                            'Synced',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  user?.email ?? 'email@example.com',
-                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  user.email ?? '',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -1244,40 +1406,72 @@ class _MoreScreenState extends State<MoreScreen>
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
-    final authService = Provider.of<AuthService>(context);
+  Widget _buildFooter(BuildContext context, User? user) {
+    final authService = Provider.of<AuthService>(context, listen: false);
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: () async {
-              try {
-                await authService.signOut();
-                if (context.mounted) {
-                  Navigator.pushReplacementNamed(context, '/login');
+        if (user != null)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                try {
+                  await authService.signOut();
+                  if (context.mounted) {
+                    AlertBanner.show(
+                      context,
+                      'Signed out. Switched to guest mode.',
+                      type: AlertBannerType.info,
+                    );
+                  }
+                } catch (e) {
+                  debugPrint('Logout error: $e');
                 }
-              } catch (e) {
-                debugPrint('Logout error: $e');
-              }
-            },
-            icon: const Icon(Icons.logout),
-            label: const Text(
-              'Logout',
-              style: TextStyle(fontWeight: FontWeight.bold),
+              },
+              icon: const Icon(Icons.logout),
+              label: const Text(
+                'Logout',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red.shade50,
+                foregroundColor: Colors.red.shade700,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),
+                ),
+              ),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade50,
-              foregroundColor: Colors.red.shade700,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-                side: BorderSide(color: Colors.red.withValues(alpha: 0.3)),
+          )
+        else
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                Navigator.pushNamed(context, AppRoutes.login);
+              },
+              icon: Icon(Icons.login_rounded, color: AppColors.primary),
+              label: Text(
+                'Sign In with Account',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                side: BorderSide(
+                  color: AppColors.primary.withValues(alpha: 0.4),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
-        ),
         const SizedBox(height: 24),
         GestureDetector(
           onTap: _handleVersionTap,

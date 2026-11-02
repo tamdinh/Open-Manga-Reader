@@ -160,6 +160,11 @@ class ProgressionService extends ChangeNotifier {
     // 1. Update local cache (merge) and notify UI immediately
     await _updateLocalCache(progression, overwrite: false, notify: true);
 
+    // If guest (not logged in), progression is kept in local Hive cache
+    if (_currentUserId.isEmpty) {
+      return;
+    }
+
     // 2. Try API
     final apiService = getIt<MangaApiService>();
     final payload = progression.toApiRequest(_currentUserId, apiService.deviceId);
@@ -266,6 +271,10 @@ class ProgressionService extends ChangeNotifier {
     await _syncAllProgressionsFromApi();
   }
 
+  Future<void> syncGuestDataAndRefresh(String userId) async {
+    await _syncAllProgressionsFromApi();
+  }
+
   Future<void> _syncAllProgressionsFromApi() async {
     if (_currentUserId.isEmpty) return;
     if (_syncCompleter != null) {
@@ -301,10 +310,23 @@ class ProgressionService extends ChangeNotifier {
           merged.add(apiProg);
         } else {
           // Conflict resolution: compare timestamps
-          if (local.lastReadAt.isAfter(apiProg.lastReadAt) &&
-              pendingSyncMangaIds.contains(local.mangaId)) {
-            // Local device read newer chapter offline
-            merged.add(local);
+          final isGuestOrPending = local.userId.isEmpty ||
+              pendingSyncMangaIds.contains(local.mangaId);
+          if (local.lastReadAt.isAfter(apiProg.lastReadAt) && isGuestOrPending) {
+            // Local read (guest or offline) is newer! Keep local and upload to server
+            final syncedLocal = local.copyWith(
+              userId: _currentUserId,
+              manga: local.manga ?? apiProg.manga,
+            );
+            merged.add(syncedLocal);
+            final payload = syncedLocal.toApiRequest(
+              _currentUserId,
+              apiService.deviceId,
+            );
+            apiService.updateUserProgression(payload).catchError((_) {
+              syncService.enqueueAction('progression_update', payload);
+              return <String, dynamic>{};
+            });
           } else {
             // Server (e.g. Device A) is newer or equal
             merged.add(apiProg.copyWith(
@@ -317,9 +339,18 @@ class ProgressionService extends ChangeNotifier {
       // Check items that exist locally but NOT on server:
       for (final local in localList) {
         if (!apiMangaIds.contains(local.mangaId)) {
-          if (pendingSyncMangaIds.contains(local.mangaId)) {
-            // Read offline on this device, waiting to be synced to server
-            merged.add(local);
+          if (local.userId.isEmpty || pendingSyncMangaIds.contains(local.mangaId)) {
+            // Read offline or as guest on this device -> sync to server!
+            final syncedLocal = local.copyWith(userId: _currentUserId);
+            merged.add(syncedLocal);
+            final payload = syncedLocal.toApiRequest(
+              _currentUserId,
+              apiService.deviceId,
+            );
+            apiService.updateUserProgression(payload).catchError((_) {
+              syncService.enqueueAction('progression_update', payload);
+              return <String, dynamic>{};
+            });
           } else {
             // Deleted from server (e.g. removed on Device A) -> remove from Hive
             try {

@@ -11,8 +11,8 @@ import 'core/network/api_config.dart';
 import 'core/network/manga_api_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/theme/theme_provider.dart';
-import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/services/auth_service.dart';
+import 'features/main/presentation/main_screen.dart';
 import 'features/manga_detail/models/manga_detail.dart';
 import 'dart:ui';
 import 'routes/app_pages.dart';
@@ -73,6 +73,7 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
   final AuthService _authService = AuthService();
   bool _isCheckingAuth = true;
+  bool _hasInitializedRoute = false;
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
   StreamSubscription<User?>? _authSubscription;
@@ -207,37 +208,38 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
     try {
       _authSubscription = _authService.authStateChanges.listen(
         (User? user) async {
-          if (mounted) {
+          if (!mounted) return;
+
+          if (!_hasInitializedRoute) {
+            _hasInitializedRoute = true;
+            await _checkApiConfiguration(user: user);
+          } else {
+            // Subsequent auth state update during app lifecycle
             if (user != null) {
-              await _checkApiConfiguration(user: user);
-            } else {
-              setState(() {
-                _isCheckingAuth = false;
-              });
+              getIt<NotificationService>().syncFcmToken();
+              _authService.ensureBackendSession(user);
             }
           }
         },
         onError: (error) {
-          if (mounted) {
-            setState(() {
-              _isCheckingAuth = false;
-            });
+          if (mounted && !_hasInitializedRoute) {
+            _hasInitializedRoute = true;
+            _checkApiConfiguration(user: null);
           }
         },
       );
 
+      // Safety timeout in case authStateChanges stream is delayed
       Future.delayed(const Duration(seconds: 3), () {
-        if (mounted && _isCheckingAuth) {
-          setState(() {
-            _isCheckingAuth = false;
-          });
+        if (mounted && !_hasInitializedRoute) {
+          _hasInitializedRoute = true;
+          _checkApiConfiguration(user: _authService.currentUser);
         }
       });
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isCheckingAuth = false;
-        });
+      if (mounted && !_hasInitializedRoute) {
+        _hasInitializedRoute = true;
+        _checkApiConfiguration(user: null);
       }
     }
   }
@@ -261,13 +263,12 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
           setState(() {
             _isCheckingAuth = false;
           });
+          // Direct entry to main screen for both guests and authenticated users
           Navigator.pushReplacementNamed(context, AppRoutes.home);
 
-          // Synchronize FCM Token with backend for authenticated session
-          getIt<NotificationService>().syncFcmToken();
-
-          // Ensure backend session and heartbeat if Firebase user is authenticated
+          // Synchronize session and FCM token if authenticated
           if (user != null) {
+            getIt<NotificationService>().syncFcmToken();
             _authService.ensureBackendSession(user);
           }
 
@@ -306,7 +307,7 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
               const CircularProgressIndicator(),
               const SizedBox(height: 20),
               Text(
-                'Checking authentication...',
+                'Opening Open Manga Reader...',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
@@ -315,9 +316,6 @@ class _AuthWrapperState extends State<AuthWrapper> with ProtocolListener {
       );
     }
 
-    return Provider<AuthService>(
-      create: (_) => _authService,
-      child: const LoginScreen(),
-    );
+    return const MainScreen();
   }
 }
