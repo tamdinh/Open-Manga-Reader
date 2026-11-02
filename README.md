@@ -213,7 +213,16 @@ The project includes a dedicated Linux deployment script [`deploy-web.sh`](deplo
    ```
    *(To deploy existing `build/web` without re-compiling: `./deploy-web.sh --skip-build`)*
 
-### 3. SPA Routing Configuration
+### 3. CI/CD Automated Deploy (GitHub Actions)
+Every `push` to the `main` branch automatically triggers the [Deploy Web to Cloudflare Pages](.github/workflows/deploy-web.yml) workflow.
+
+**Required GitHub Repository Secret:**
+- In GitHub, go to **Settings** > **Secrets and variables** > **Actions** > **New repository secret**:
+  - Name: `CLOUDFLARE_API_TOKEN`
+  - Value: Your Cloudflare API Token (with *Account > Cloudflare Pages > Edit* permissions)
+  - *(Optional)* `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID if your user has multiple accounts.
+
+### 4. SPA Routing Configuration
 Cloudflare Pages handles SPA client-side routes via [`web/_redirects`](web/_redirects):
 ```text
 /*    /index.html   200
