@@ -248,25 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.baseApiSetting);
-                    },
-                    icon: Icon(
-                      Icons.settings_outlined,
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
-                    label: Text(
-                      "Configure API Server",
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
                   const Spacer(),
                   Text.rich(
                     TextSpan(
@@ -320,29 +301,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       } else {
                         Navigator.pushReplacementNamed(context, AppRoutes.home);
                       }
-                    },
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Top Settings Action Button
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.settings, color: Colors.white, size: 22),
-                    tooltip: 'API Settings',
-                    onPressed: () {
-                      Navigator.pushNamed(context, AppRoutes.baseApiSetting);
                     },
                   ),
                 ),
