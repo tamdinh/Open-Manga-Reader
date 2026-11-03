@@ -728,30 +728,36 @@ class _ReaderScreenState extends State<ReaderScreen>
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return ReaderSettingsSheet(
-          isWebtoonMode: _controller.isWebtoonMode,
-          isRtlMode: _controller.isRtlMode,
-          isAutoScrolling: _controller.isAutoScrolling,
-          autoScrollSpeed: _controller.autoScrollSpeed,
-          hideMiniProgressBar: _controller.hideMiniProgressBar,
-          onWebtoonModeChanged: (val) {
-            _controller.setWebtoonMode(val);
-            Navigator.pop(context);
-          },
-          onRtlModeChanged: (val) {
-            _controller.setRtlMode(val);
-            Navigator.pop(context);
-          },
-          onAutoScrollChanged: (val) {
-            _toggleAutoScroll();
-            Navigator.pop(context);
-          },
-          onAutoScrollSpeedChanged: (val) {
-            _controller.setAutoScrollSpeed(val);
-          },
-          onHideMiniProgressBarChanged: (val) {
-            _controller.setHideMiniProgressBar(val);
+      builder: (bottomSheetContext) {
+        return ListenableBuilder(
+          listenable: _controller,
+          builder: (context, _) {
+            return ReaderSettingsSheet(
+              isWebtoonMode: _controller.isWebtoonMode,
+              isRtlMode: _controller.isRtlMode,
+              isAutoScrolling: _controller.isAutoScrolling,
+              autoScrollSpeed: _controller.autoScrollSpeed,
+              hideMiniProgressBar: _controller.hideMiniProgressBar,
+              onWebtoonModeChanged: (val) {
+                _controller.setWebtoonMode(val);
+                Navigator.pop(bottomSheetContext);
+              },
+              onRtlModeChanged: (val) {
+                _controller.setRtlMode(val);
+                Navigator.pop(bottomSheetContext);
+              },
+              onAutoScrollChanged: (val) {
+                _toggleAutoScroll();
+                Navigator.pop(bottomSheetContext);
+              },
+              onAutoScrollSpeedChanged: (val) {
+                _controller.setAutoScrollSpeed(val);
+              },
+              onHideMiniProgressBarChanged: (val) {
+                _controller.setHideMiniProgressBar(val);
+                Navigator.pop(bottomSheetContext);
+              },
+            );
           },
         );
       },

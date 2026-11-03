@@ -131,6 +131,7 @@ class ReaderSettingsSheet extends StatelessWidget {
                 _buildSettingRow(
                   icon: Icons.play_arrow_outlined,
                   title: 'Auto Scroll',
+                  onTap: () => onAutoScrollChanged(!isAutoScrolling),
                   trailing: Switch.adaptive(
                     value: isAutoScrolling,
                     activeTrackColor: AppColors.primary,
@@ -180,6 +181,8 @@ class ReaderSettingsSheet extends StatelessWidget {
                 _buildSettingRow(
                   icon: Icons.linear_scale,
                   title: 'Hide Mini Progress Bar',
+                  onTap: () =>
+                      onHideMiniProgressBarChanged(!hideMiniProgressBar),
                   trailing: Switch.adaptive(
                     value: hideMiniProgressBar,
                     activeTrackColor: AppColors.primary,
@@ -199,8 +202,9 @@ class ReaderSettingsSheet extends StatelessWidget {
     required IconData icon,
     required String title,
     required Widget trailing,
+    VoidCallback? onTap,
   }) {
-    return Row(
+    final rowContent = Row(
       children: [
         Icon(icon, color: Colors.white70, size: 22),
         const SizedBox(width: 12),
@@ -216,6 +220,19 @@ class ReaderSettingsSheet extends StatelessWidget {
         trailing,
       ],
     );
+
+    if (onTap != null) {
+      return InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          child: rowContent,
+        ),
+      );
+    }
+
+    return rowContent;
   }
 
   Widget _buildModeSegment({
