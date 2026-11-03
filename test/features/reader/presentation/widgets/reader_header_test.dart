@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:my_manga_reader/features/reader/presentation/widgets/reader_header.dart';
@@ -113,8 +114,8 @@ void main() {
 
       await tester.pump();
 
-      expect(find.byIcon(Icons.fullscreen_rounded), findsOneWidget);
-      await tester.tap(find.byIcon(Icons.fullscreen_rounded));
+      expect(find.byIcon(Icons.fullscreen_exit_rounded), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.fullscreen_exit_rounded));
       expect(fullscreenToggled, isTrue);
 
       // Re-render with isFullscreen: true
@@ -134,7 +135,81 @@ void main() {
       );
 
       await tester.pump();
-      expect(find.byIcon(Icons.fullscreen_exit_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.fullscreen_rounded), findsOneWidget);
+    });
+
+    testWidgets('shows chapter list icon when onChapterListTap is provided', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ReaderHeader(
+              mangaTitle: 'Manga Title',
+              chapterTitle: 'Chapter 1',
+              onBack: () {},
+              onSettings: () {},
+              onChapterListTap: () {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(find.byIcon(Icons.format_list_bulleted_rounded), findsOneWidget);
+      expect(find.byIcon(Icons.keyboard_arrow_down_rounded), findsOneWidget);
+    });
+
+    testWidgets('hides keyboard shortcuts button on mobile screen width', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ReaderHeader(
+              mangaTitle: 'Manga Title',
+              chapterTitle: 'Chapter 1',
+              onBack: () {},
+              onSettings: () {},
+              onShowShortcuts: () {},
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+
+      expect(find.byIcon(Icons.keyboard_alt_outlined), findsNothing);
+    });
+
+    testWidgets('shows keyboard shortcuts button on desktop platform and desktop screen width', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      try {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ReaderHeader(
+                mangaTitle: 'Manga Title',
+                chapterTitle: 'Chapter 1',
+                onBack: () {},
+                onSettings: () {},
+                onShowShortcuts: () {},
+              ),
+            ),
+          ),
+        );
+
+        await tester.pump();
+
+        expect(find.byIcon(Icons.keyboard_alt_outlined), findsOneWidget);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     });
   });
 }

@@ -1,5 +1,8 @@
-import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import 'reader_status_bar_info.dart';
 
 class ReaderHeader extends StatelessWidget {
@@ -27,7 +30,9 @@ class ReaderHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isCompact = screenWidth < 400;
+    final isMobilePlatform = defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+    final isMobileDevice = isMobilePlatform || screenWidth < 600;
 
     return ClipRect(
       child: BackdropFilter(
@@ -46,7 +51,10 @@ class ReaderHeader extends StatelessWidget {
           child: SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobileDevice ? 10 : 16,
+                vertical: 8,
+              ),
               child: Row(
                 children: [
                   _buildGlassIconButton(
@@ -54,69 +62,110 @@ class ReaderHeader extends StatelessWidget {
                     onBack,
                     tooltip: 'Back (Esc)',
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
-                    child: InkWell(
-                      onTap: onChapterListTap,
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.5),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.white10),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    mangaTitle,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 1),
-                                  Row(
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          chapterTitle,
-                                          style: TextStyle(
-                                            color: Colors.white.withValues(alpha: 0.7),
-                                            fontSize: 11,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                    child: Tooltip(
+                      message: 'Select Chapter (Danh sách chương)',
+                      child: InkWell(
+                        onTap: onChapterListTap,
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: onChapterListTap != null
+                                  ? AppColors.primary.withValues(alpha: 0.3)
+                                  : Colors.white10,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      mangaTitle,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
                                       ),
-                                      if (onChapterListTap != null) ...[
-                                        const SizedBox(width: 4),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Row(
+                                      children: [
                                         Icon(
-                                          Icons.keyboard_arrow_down_rounded,
-                                          color: Colors.white.withValues(alpha: 0.6),
-                                          size: 16,
+                                          Icons.menu_book_rounded,
+                                          size: 13,
+                                          color: AppColors.primary.withValues(alpha: 0.9),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Flexible(
+                                          child: Text(
+                                            chapterTitle,
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(alpha: 0.8),
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
                                         ),
                                       ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (onChapterListTap != null) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: AppColors.primary.withValues(alpha: 0.45),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.format_list_bulleted_rounded,
+                                        color: AppColors.primary,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        color: Colors.white.withValues(alpha: 0.85),
+                                        size: 16,
+                                      ),
                                     ],
                                   ),
-                                ],
-                              ),
-                            ),
-                          ],
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  if (!isCompact) ...[
+                  if (!isMobileDevice) ...[
                     const SizedBox(width: 8),
                     const ReaderStatusBarInfo(),
                   ],
@@ -124,13 +173,15 @@ class ReaderHeader extends StatelessWidget {
                     const SizedBox(width: 8),
                     _buildGlassIconButton(
                       isFullscreen
-                          ? Icons.fullscreen_exit_rounded
-                          : Icons.fullscreen_rounded,
+                          ? Icons.fullscreen_rounded
+                          : Icons.fullscreen_exit_rounded,
                       onToggleFullscreen!,
-                      tooltip: 'Toggle Fullscreen (F)',
+                      tooltip: isFullscreen
+                          ? 'Exit Fullscreen (F)'
+                          : 'Fullscreen (F)',
                     ),
                   ],
-                  if (onShowShortcuts != null && !isCompact) ...[
+                  if (onShowShortcuts != null && !isMobileDevice) ...[
                     const SizedBox(width: 8),
                     _buildGlassIconButton(
                       Icons.keyboard_alt_outlined,

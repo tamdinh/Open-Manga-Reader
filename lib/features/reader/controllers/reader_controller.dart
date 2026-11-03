@@ -8,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../../core/di/injection.dart';
 import '../../../core/network/manga_api_service.dart';
+import '../../../core/utils/web_fullscreen_helper.dart';
 import '../../download/services/download_service.dart';
 import '../../history/models/progression.dart';
 import '../../history/services/progression_service.dart';
@@ -51,6 +52,7 @@ class ReaderController extends ChangeNotifier {
   bool _isRtlMode = false;
   bool _hideMiniProgressBar = false;
   bool _isFullscreen = false;
+  StreamSubscription? _webFullscreenSubscription;
 
   int _chapterInitialReadingTimeSeconds = 0;
   late DateTime _sessionStartTime;
@@ -143,8 +145,22 @@ class ReaderController extends ChangeNotifier {
   }
 
   Future<void> checkInitialFullscreen() async {
-    if (!kIsWeb &&
-        (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    if (kIsWeb) {
+      if (!_disposed) {
+        _isFullscreen = WebFullscreenHelper.isFullscreen;
+        _safeNotifyListeners();
+      }
+      _webFullscreenSubscription ??=
+          WebFullscreenHelper.listenFullscreenChanges((isFull) {
+        if (!_disposed && _isFullscreen != isFull) {
+          _isFullscreen = isFull;
+          _safeNotifyListeners();
+        }
+      });
+      return;
+    }
+
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       try {
         final isFull = await windowManager.isFullScreen();
         if (!_disposed) {
@@ -158,8 +174,17 @@ class ReaderController extends ChangeNotifier {
   }
 
   Future<void> toggleFullscreen() async {
-    if (!kIsWeb &&
-        (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    if (kIsWeb) {
+      final target = !_isFullscreen;
+      final newStatus = await WebFullscreenHelper.toggleFullscreen(target);
+      if (!_disposed) {
+        _isFullscreen = newStatus;
+        _safeNotifyListeners();
+      }
+      return;
+    }
+
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       final isFull = await windowManager.isFullScreen();
       await windowManager.setFullScreen(!isFull);
       if (!_disposed) {
@@ -615,6 +640,7 @@ class ReaderController extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _webFullscreenSubscription?.cancel();
     _chapterCancelToken?.cancel();
     _debounceTimer?.cancel();
     _currentPageNotifier.dispose();
