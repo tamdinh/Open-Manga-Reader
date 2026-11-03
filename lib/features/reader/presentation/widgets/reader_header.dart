@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
 import 'reader_status_bar_info.dart';
 
 class ReaderHeader extends StatelessWidget {
@@ -70,25 +69,22 @@ class ReaderHeader extends StatelessWidget {
                         onTap: onChapterListTap,
                         borderRadius: BorderRadius.circular(16),
                         child: Container(
+                          height: 42,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 7,
+                            vertical: 3,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: onChapterListTap != null
-                                  ? AppColors.primary.withValues(alpha: 0.3)
-                                  : Colors.white10,
-                            ),
+                            border: Border.all(color: Colors.white10),
                           ),
                           child: Row(
                             children: [
                               Expanded(
                                 child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(
                                       mangaTitle,
@@ -96,6 +92,7 @@ class ReaderHeader extends StatelessWidget {
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
+                                        height: 1.15,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -105,17 +102,18 @@ class ReaderHeader extends StatelessWidget {
                                       children: [
                                         Icon(
                                           Icons.menu_book_rounded,
-                                          size: 13,
-                                          color: AppColors.primary.withValues(alpha: 0.9),
+                                          size: 12,
+                                          color: Colors.white.withValues(alpha: 0.6),
                                         ),
                                         const SizedBox(width: 4),
                                         Flexible(
                                           child: Text(
                                             chapterTitle,
                                             style: TextStyle(
-                                              color: Colors.white.withValues(alpha: 0.8),
+                                              color: Colors.white.withValues(alpha: 0.75),
                                               fontSize: 11,
                                               fontWeight: FontWeight.w500,
+                                              height: 1.15,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -130,30 +128,27 @@ class ReaderHeader extends StatelessWidget {
                                 const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 5,
+                                    horizontal: 6,
+                                    vertical: 4,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: AppColors.primary.withValues(alpha: 0.45),
-                                      width: 1,
-                                    ),
+                                    color: Colors.white.withValues(alpha: 0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.white10),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
                                         Icons.format_list_bulleted_rounded,
-                                        color: AppColors.primary,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 3),
-                                      Icon(
-                                        Icons.keyboard_arrow_down_rounded,
                                         color: Colors.white.withValues(alpha: 0.85),
                                         size: 16,
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        color: Colors.white.withValues(alpha: 0.6),
+                                        size: 15,
                                       ),
                                     ],
                                   ),
@@ -210,12 +205,16 @@ class ReaderHeader extends StatelessWidget {
     String? tooltip,
   }) {
     final button = Container(
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.5),
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white10),
       ),
       child: IconButton(
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 42, minHeight: 42),
         icon: Icon(icon, color: Colors.white, size: 20),
         onPressed: onTap,
       ),
