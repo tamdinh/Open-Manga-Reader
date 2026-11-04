@@ -423,7 +423,7 @@ class _SearchScrapScreenState extends State<SearchScrapScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Không có quyền truy cập',
+                  'Access Denied',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -432,7 +432,7 @@ class _SearchScrapScreenState extends State<SearchScrapScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Chức năng tìm kiếm và cào truyện từ các nguồn bên ngoài chỉ dành cho Quản trị viên và người vận hành hệ thống.',
+                  'Searching and scraping manga from external sources is only available to administrators and system operators.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,

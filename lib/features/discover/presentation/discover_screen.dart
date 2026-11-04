@@ -103,7 +103,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     if (!_apiService.canScrap) {
       AlertBanner.show(
         context,
-        'Chức năng kiểm tra hàng đợi chỉ dành cho Quản trị viên và người vận hành hệ thống.',
+        'Queue inspection is only available to administrators and system operators.',
         type: AlertBannerType.warning,
       );
       return;
@@ -118,7 +118,7 @@ class _DiscoverScreenState extends State<DiscoverScreen>
     if (!_apiService.canScrap) {
       AlertBanner.show(
         context,
-        'Chức năng cào truyện chỉ dành cho Quản trị viên và người vận hành hệ thống.',
+        'Manga scraping is only available to administrators and system operators.',
         type: AlertBannerType.warning,
       );
       return;

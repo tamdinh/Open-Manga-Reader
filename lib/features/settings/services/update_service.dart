@@ -9,7 +9,7 @@ import 'package:path_provider/path_provider.dart';
 class UpdateService {
   final Dio _dio = Dio();
 
-  /// Mendeteksi ABI perangkat Android saat ini (e.g. arm64-v8a, armeabi-v7a, x86_64)
+  /// Detects the current Android device ABI (e.g. arm64-v8a, armeabi-v7a, x86_64)
   String getAndroidAbi() {
     if (kIsWeb || !Platform.isAndroid) return '';
     try {
@@ -107,7 +107,7 @@ class UpdateService {
     return assetList.isNotEmpty ? assetList.first : null;
   }
 
-  /// Download file update dengan progress callback
+  /// Downloads the update file with a progress callback
   Future<String?> downloadUpdate({
     required String downloadUrl,
     required String fileName,

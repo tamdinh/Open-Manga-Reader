@@ -64,7 +64,7 @@ class ReaderHeader extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Tooltip(
-                      message: 'Select Chapter (Danh sách chương)',
+                      message: 'Select Chapter',
                       child: InkWell(
                         onTap: onChapterListTap,
                         borderRadius: BorderRadius.circular(16),

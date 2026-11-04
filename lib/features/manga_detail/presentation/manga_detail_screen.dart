@@ -447,7 +447,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                     if (!_apiService.canScrap) {
                                       AlertBanner.show(
                                         context,
-                                        'Chức năng cào truyện chỉ dành cho Quản trị viên và người vận hành hệ thống.',
+                                        'Manga scraping is only available to administrators and system operators.',
                                         type: AlertBannerType.warning,
                                       );
                                       return;
@@ -469,7 +469,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                           if (e.response?.statusCode == 401) {
                                             message = 'Please sign in to scrape chapters';
                                           } else if (e.response?.statusCode == 403) {
-                                            message = 'Chức năng cào truyện chỉ dành cho Quản trị viên và người vận hành hệ thống.';
+                                            message = 'Manga scraping is only available to administrators and system operators.';
                                           } else if (e.response?.statusCode == 429) {
                                             message = 'Scraping rate limit reached. Please wait a moment.';
                                           } else if (e.response?.data is Map) {
@@ -831,7 +831,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                       ),
                       const SizedBox(height: 12),
                       const Text(
-                        'Manga Tidak Tersedia',
+                        'Manga Unavailable',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -840,7 +840,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Manga ini telah dihapus atau tidak lagi ditemukan di server.',
+                        'This manga has been removed or can no longer be found on the server.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 13,

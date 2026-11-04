@@ -36,7 +36,7 @@ class _ScrapQueueDialogState extends State<ScrapQueueDialog> {
       if (!mounted) return;
       setState(() {
         _error =
-            'Chức năng kiểm tra hàng đợi chỉ dành cho Quản trị viên và người vận hành hệ thống.';
+            'Queue inspection is only available to administrators and system operators.';
         _isLoading = false;
       });
       return;

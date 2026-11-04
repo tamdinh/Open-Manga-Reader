@@ -827,7 +827,7 @@ class MangaApiService {
           statusCode: 403,
           data: {
             'message':
-                'Chức năng cào truyện chỉ dành cho Quản trị viên và người vận hành hệ thống.'
+                'Manga scraping is only available to administrators and system operators.'
           },
         ),
         type: DioExceptionType.badResponse,

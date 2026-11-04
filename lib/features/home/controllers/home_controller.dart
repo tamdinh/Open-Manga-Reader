@@ -133,7 +133,18 @@ class HomeController extends ChangeNotifier {
         genres: tab.genre != null ? [tab.genre!] : null,
         pageSize: 10,
       );
-      _trendingByTab[tabIdx] = response.items;
+      var items = response.items;
+      if (items.isEmpty) {
+        // Server trending can be empty (e.g. view window reset); fall back to most viewed.
+        final fallback = await _apiService.getPagedManga(
+          genres: tab.genre != null ? [tab.genre!] : null,
+          sortBy: 'views',
+          orderBy: 'desc',
+          pageSize: 10,
+        );
+        items = fallback.items;
+      }
+      _trendingByTab[tabIdx] = items;
     } catch (e) {
       debugPrint('fetchTrendingForTab error: $e');
     } finally {
