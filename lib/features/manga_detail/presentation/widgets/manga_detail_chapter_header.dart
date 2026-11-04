@@ -12,9 +12,15 @@ class MangaDetailChapterHeader extends StatefulWidget {
   final VoidCallback onScrapChapters;
   final VoidCallback? onDownloadChapters;
   final bool canScrap;
+  final List<String> languages;
+  final String? selectedLanguage;
+  final ValueChanged<String>? onLanguageChanged;
 
   const MangaDetailChapterHeader({
     super.key,
+    this.languages = const [],
+    this.selectedLanguage,
+    this.onLanguageChanged,
     required this.isAscending,
     required this.currentFilter,
     required this.onFilterChanged,
@@ -49,6 +55,59 @@ class _MangaDetailChapterHeaderState extends State<MangaDetailChapterHeader> {
       case ChapterFilterOption.readOnly:
         return 'Read';
     }
+  }
+
+  static String languageLabel(String code) {
+    switch (code.toLowerCase()) {
+      case 'en':
+        return 'English';
+      case 'vi':
+        return 'Tiếng Việt';
+      case '':
+        return 'Other';
+      default:
+        return code.toUpperCase();
+    }
+  }
+
+  Widget _buildLanguagePicker(ColorScheme colorScheme) {
+    final selected = widget.selectedLanguage ?? widget.languages.first;
+    return PopupMenuButton<String>(
+      tooltip: 'Chapter language',
+      initialValue: selected,
+      onSelected: (lang) {
+        HapticFeedback.selectionClick();
+        widget.onLanguageChanged?.call(lang);
+      },
+      itemBuilder: (context) => [
+        for (final lang in widget.languages)
+          PopupMenuItem(value: lang, child: Text(languageLabel(lang))),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: colorScheme.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.language_rounded, size: 16, color: colorScheme.primary),
+            const SizedBox(width: 4),
+            Text(
+              selected.isEmpty ? 'OTHER' : selected.toUpperCase(),
+              style: GoogleFonts.inter(
+                color: colorScheme.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Icon(Icons.arrow_drop_down_rounded,
+                size: 18, color: colorScheme.primary),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -233,6 +292,14 @@ class _MangaDetailChapterHeaderState extends State<MangaDetailChapterHeader> {
             ),
           ],
         ),
+        if (widget.languages.length > 1)
+          Padding(
+            padding: const EdgeInsets.only(top: 2, bottom: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _buildLanguagePicker(colorScheme),
+            ),
+          ),
         if (widget.currentFilter != ChapterFilterOption.all)
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 8),

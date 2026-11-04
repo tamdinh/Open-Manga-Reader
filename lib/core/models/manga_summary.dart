@@ -9,6 +9,8 @@ class MangaSummary {
   final List<String>? genres;
   final List<String>? categories;
   final String? description;
+  final String? descriptionVi;
+  final String? descriptionLanguage;
   final String? imageUrl;
   final String? localImageUrl;
   final int? thumbnailSize;
@@ -35,6 +37,8 @@ class MangaSummary {
     this.genres,
     this.categories,
     this.description,
+    this.descriptionVi,
+    this.descriptionLanguage,
     this.imageUrl,
     this.localImageUrl,
     this.thumbnailSize,
@@ -67,6 +71,8 @@ class MangaSummary {
           ?.map((e) => e as String)
           .toList(),
       description: json['description'] as String?,
+      descriptionVi: json['descriptionVi'] as String?,
+      descriptionLanguage: json['descriptionLanguage'] as String?,
       imageUrl: json['imageUrl'] as String?,
       localImageUrl: json['localImageUrl'] as String?,
       thumbnailSize: json['thumbnailSize'] as int?,
@@ -108,6 +114,8 @@ class MangaSummary {
       'genres': genres,
       'categories': categories,
       'description': description,
+      'descriptionVi': descriptionVi,
+      'descriptionLanguage': descriptionLanguage,
       'imageUrl': imageUrl,
       'localImageUrl': localImageUrl,
       'thumbnailSize': thumbnailSize,

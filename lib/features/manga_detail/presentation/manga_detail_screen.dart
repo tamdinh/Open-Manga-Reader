@@ -180,7 +180,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
           mangaTitle: widget.manga.title,
           currentChapterNumber: chapter.chapterNumber,
           chapterId: chapter.id,
-          allChapters: _controller.chapters,
+          allChapters: _controller.languageChapters,
           chapterTitle: chapter.title,
           pages: pages,
           currentPage: startingPage,
@@ -342,7 +342,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                         MangaDetailAppBar(
                           manga: widget.manga,
                           heroImageUrl: heroImageUrl,
-                          chapterCount: _controller.chapters.length,
+                          chapterCount: _controller.languageChapters.length,
                           heroTag: widget.heroTag,
                           onRefresh: _controller.refresh,
                           onCoverTap: _openFullScreenCover,
@@ -369,7 +369,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                   ),
                                   const SizedBox(height: 16),
                                   MangaDetailSynopsis(
-                                    description: widget.manga.description,
+                                    description: _controller.description,
                                   ),
                                 ],
                               ),
@@ -405,7 +405,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                             fontSize: 15,
                           ),
                           tabs: [
-                            Tab(text: 'Chapters (${_controller.chapters.length})'),
+                            Tab(text: 'Chapters (${_controller.languageChapters.length})'),
                             Tab(text: 'Recommendations (${_controller.recommendations.length})'),
                             Tab(text: 'Similar Category (${_controller.similarByCategory.length})'),
                           ],
@@ -429,6 +429,9 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                   vertical: 12,
                                 ),
                                 child: MangaDetailChapterHeader(
+                                  languages: _controller.availableLanguages,
+                                  selectedLanguage: _controller.selectedLanguage,
+                                  onLanguageChanged: _controller.setLanguage,
                                   isAscending: _controller.isAscending,
                                   currentFilter: _controller.chapterFilter,
                                   onFilterChanged: _controller.setChapterFilter,
@@ -439,7 +442,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                                     MangaDownloadBottomSheet.show(
                                       context,
                                       manga: widget.manga,
-                                      chapters: _controller.chapters,
+                                      chapters: _controller.languageChapters,
                                       progression: _controller.progression,
                                     );
                                   },
@@ -692,7 +695,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
                 right: 0,
                 child: RepaintBoundary(
                   child: MangaDetailFloatingDock(
-                    chapters: _controller.chapters,
+                    chapters: _controller.languageChapters,
                     targetChapter: _controller.targetChapter,
                     isLoadingChapters: _controller.isLoadingChapters,
                     isInLibrary: _controller.isInLibrary,

@@ -55,6 +55,9 @@ class MangaDetailController extends ChangeNotifier {
   Map<double, UserChapterLog> _chapterLogsMap = {};
   Chapter? _targetChapter;
   List<Chapter> _filteredChaptersCache = [];
+  List<Chapter> _languageChapters = [];
+  List<String> _availableLanguages = [];
+  String? _selectedLanguage;
 
   Timer? _searchDebounce;
   Timer? _clearScrapingTimer;
@@ -73,6 +76,18 @@ class MangaDetailController extends ChangeNotifier {
   bool get isInLibrary => _isInLibrary;
   bool get isFavorite => _isFavorite;
   String? get libraryStatus => _libraryStatus;
+
+  /// Languages present in the chapter list (lowercase codes, sorted with
+  /// English and Vietnamese first). Empty-language chapters are grouped as `''`.
+  List<String> get availableLanguages => _availableLanguages;
+  String? get selectedLanguage => _selectedLanguage;
+
+  /// All chapters of the currently selected language (unfiltered by search/read state).
+  List<Chapter> get languageChapters => _languageChapters;
+
+  /// Synopsis in the selected language (falls back to the generic description).
+  String? get description => manga.descriptionFor(_selectedLanguage);
+
   MangaProgression? get progression => _progression;
   List<MangaSummary> get recommendations => _recommendations;
   bool get isLoadingRecommendations => _isLoadingRecommendations;
@@ -275,9 +290,12 @@ class MangaDetailController extends ChangeNotifier {
       }
     }
 
+    _resolveLanguage();
+
     _targetChapter = null;
-    if (_chapters.isNotEmpty) {
-      final available = _chapters.where((c) => c.isChapterAvailable).toList();
+    if (_languageChapters.isNotEmpty) {
+      final available =
+          _languageChapters.where((c) => c.isChapterAvailable).toList();
       if (available.isNotEmpty) {
         if (_progression != null && _progression!.currentChapter > 0) {
           _targetChapter = available
@@ -293,13 +311,49 @@ class MangaDetailController extends ChangeNotifier {
     _filteredChaptersCache = _computeFilteredChapters();
   }
 
+  /// Recomputes available languages, validates the selected one (defaulting to
+  /// English, then Vietnamese, then the first available) and rebuilds
+  /// [_languageChapters].
+  void _resolveLanguage() {
+    final langs = _chapters.map((c) => c.language.toLowerCase()).toSet().toList()
+      ..sort((a, b) {
+        int rank(String l) => l == 'en' ? 0 : (l == 'vi' ? 1 : (l.isEmpty ? 3 : 2));
+        final r = rank(a).compareTo(rank(b));
+        return r != 0 ? r : a.compareTo(b);
+      });
+    _availableLanguages = langs;
+
+    if (langs.isEmpty) {
+      _selectedLanguage = null;
+    } else if (_selectedLanguage == null ||
+        !langs.contains(_selectedLanguage)) {
+      _selectedLanguage = langs.first;
+    }
+
+    _languageChapters = _selectedLanguage == null
+        ? List.of(_chapters)
+        : _chapters
+            .where((c) => c.language.toLowerCase() == _selectedLanguage)
+            .toList();
+  }
+
+  void setLanguage(String language) {
+    final lang = language.toLowerCase();
+    if (lang == _selectedLanguage || !_availableLanguages.contains(lang)) {
+      return;
+    }
+    _selectedLanguage = lang;
+    _updateDerivedState();
+    notifyListeners();
+  }
+
   List<Chapter> _computeFilteredChapters() {
-    if (_chapters.isEmpty) return const [];
+    if (_languageChapters.isEmpty) return const [];
 
     final hasQuery = _searchQuery.isNotEmpty;
     final query = hasQuery ? _searchQuery.toLowerCase() : '';
 
-    return _chapters.where((c) {
+    return _languageChapters.where((c) {
       // 1. Search Query Filter
       if (hasQuery) {
         final titleMatch = c.title.toLowerCase().contains(query);
@@ -775,6 +829,9 @@ class MangaDetailController extends ChangeNotifier {
       genres: manga.genres,
       categories: manga.categories,
       description: manga.description,
+      descriptionVi: manga.descriptionVi,
+      descriptionLanguage: manga.descriptionLanguage,
+      descriptions: manga.descriptions,
       imageUrl: manga.imageUrl,
       localImageUrl: manga.localImageUrl,
       rating: manga.rating,
