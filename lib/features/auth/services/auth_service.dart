@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 import 'dart:io' show Platform;
 
+import 'package:dio/dio.dart' show DioException;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -72,11 +73,20 @@ class AuthService {
   }
 
   Future<User?> _finishEmailAuth(UserCredential credential) async {
-    final idToken = await credential.user?.getIdToken();
-    if (idToken != null) {
-      await _handlePostLogin(idToken);
+    try {
+      final idToken = await credential.user?.getIdToken();
+      if (idToken != null) {
+        await _handlePostLogin(idToken);
+      }
+      return credential.user;
+    } catch (e) {
+      // The API refused the session (e.g. email not verified yet). Don't leave
+      // the app half signed-in to Firebase without a backend session.
+      try {
+        await _auth.signOut();
+      } catch (_) {}
+      rethrow;
     }
-    return credential.user;
   }
 
   Future<User?> signInWithEmail(String email, String password) async {
@@ -132,6 +142,16 @@ class AuthService {
           return 'Network error. Check your connection.';
         default:
           return e.message ?? 'Authentication failed (${e.code}).';
+      }
+    }
+    if (e is DioException) {
+      switch (e.response?.statusCode) {
+        case 403:
+          return 'Please verify your email address (check your inbox), then sign in again.';
+        case 409:
+          return 'This email is already linked to another account.';
+        case null:
+          return 'Could not reach the server. Check your API settings.';
       }
     }
     return 'Error: $e';
