@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
+import '../../features/history/services/progression_service.dart';
 import '../di/injection.dart';
 import '../storage/hive_storage.dart';
 import 'manga_api_service.dart';
@@ -113,8 +115,21 @@ class SyncService {
               success = true;
               break;
           }
-        } catch (_) {
+        } catch (e) {
           success = false;
+          // The manga was deleted on the server: retrying can never succeed, drop the action
+          // and any local progression, otherwise it is replayed forever.
+          if (e is DioException && e.response?.statusCode == 404) {
+            if (action.type == 'progression_update') {
+              final id = action.payload['mangaId']?.toString();
+              if (id != null && id.isNotEmpty) {
+                try {
+                  await getIt<ProgressionService>().deleteProgression(id);
+                } catch (_) {}
+              }
+            }
+            success = true; // treat as handled so it is removed from the queue
+          }
         }
 
         if (success) {

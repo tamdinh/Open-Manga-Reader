@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../../../core/storage/hive_storage.dart';
 import '../models/progression.dart';
@@ -181,6 +182,11 @@ class ProgressionService extends ChangeNotifier {
         );
       }
     } catch (e) {
+      // Manga no longer exists on the server: forget it instead of queueing a doomed retry.
+      if (e is DioException && e.response?.statusCode == 404) {
+        await deleteProgression(progression.mangaId);
+        return;
+      }
       // 3. Queue for sync if failed
       getIt<SyncService>().enqueueAction(
         'progression_update',
