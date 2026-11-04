@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/di/injection.dart';
 import '../../../../core/utils/formatters.dart';
@@ -145,85 +144,6 @@ class MangaDetailChapterTile extends StatelessWidget {
                           runSpacing: 4,
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            // Language Badge
-                            if (chapter.language.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary
-                                      .withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(
-                                    color: colorScheme.primary
-                                        .withValues(alpha: 0.25),
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: Text(
-                                  chapter.language.toUpperCase(),
-                                  style: GoogleFonts.inter(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-
-                            // Provider Badge
-                            if (chapter.chapterProvider != null &&
-                                chapter.chapterProvider!.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.08)
-                                      : Colors.black.withValues(alpha: 0.05),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (chapter.chapterProviderIcon != null) ...[
-                                      Container(
-                                        width: 12,
-                                        height: 12,
-                                        margin: const EdgeInsets.only(right: 4),
-                                        child: CachedNetworkImage(
-                                          imageUrl: chapter
-                                              .chapterProviderIcon!,
-                                          width: 12,
-                                          height: 12,
-                                          memCacheWidth: 40,
-                                          errorBuilder: (_, _, _) => Icon(
-                                            Icons.link_rounded,
-                                            size: 10,
-                                            color: isDark
-                                                ? Colors.white60
-                                                : Colors.black54,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                    Text(
-                                      chapter.chapterProvider!,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark
-                                            ? Colors.white70
-                                            : Colors.black87,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-
                             // View Count
                             Row(
                               mainAxisSize: MainAxisSize.min,
