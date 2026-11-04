@@ -702,31 +702,41 @@ class _ReaderScreenState extends State<ReaderScreen>
                 key == LogicalKeyboardKey.keyA);
 
       if (isForward) {
-        if (_controller.currentPage < _controller.pageUrls.length) {
-          _pageController.animateToPage(
-            _controller.currentPage,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        } else {
-          _changeChapter(true);
-        }
+        _goToNextPagedPage();
         return true;
       } else if (isBackward) {
-        if (_controller.currentPage > 1) {
-          _pageController.animateToPage(
-            _controller.currentPage - 2,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        } else {
-          _changeChapter(false);
-        }
+        _goToPreviousPagedPage();
         return true;
       }
     }
 
     return false;
+  }
+
+  void _goToNextPagedPage() {
+    if (!_pageController.hasClients || _controller.isLoading) return;
+    if (_controller.currentPage < _controller.pageUrls.length) {
+      _pageController.animateToPage(
+        _controller.currentPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      _changeChapter(true);
+    }
+  }
+
+  void _goToPreviousPagedPage() {
+    if (!_pageController.hasClients || _controller.isLoading) return;
+    if (_controller.currentPage > 1) {
+      _pageController.animateToPage(
+        _controller.currentPage - 2,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      _changeChapter(false);
+    }
   }
 
   void _scrollSmoothly(double delta) {
@@ -866,6 +876,20 @@ class _ReaderScreenState extends State<ReaderScreen>
               Positioned.fill(
                 child: NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
+                  // Auto-hide header/bottom bar when the user scrolls.
+                  // Slider, chapter restore/jump and auto-scroll are excluded.
+                  if (_controller.showUI &&
+                      notification is ScrollUpdateNotification &&
+                      (notification.dragDetails != null ||
+                          // mouse wheel / trackpad / keyboard scrolling
+                          (!_controller.isAutoScrolling &&
+                              !_controller.isRestoringScroll &&
+                              !_controller.isJumpingToPage)) &&
+                      (notification.scrollDelta ?? 0).abs() > 2 &&
+                      !_controller.isSliderScrolling &&
+                      !_controller.isLoading) {
+                    _controller.setShowUI(false);
+                  }
                   if (notification is UserScrollNotification) {
                     _targetScrollOffset = null;
                     if (!_controller.isChangingChapter &&
@@ -994,6 +1018,8 @@ class _ReaderScreenState extends State<ReaderScreen>
                     onDoubleTapDown: _handleDoubleTapDown,
                     onDoubleTap: _handleDoubleTap,
                     onToggleUI: _controller.toggleUI,
+                    onNextPage: _goToNextPagedPage,
+                    onPreviousPage: _goToPreviousPagedPage,
                   ),
                 ),
               ),

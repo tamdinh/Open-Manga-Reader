@@ -28,6 +28,8 @@ class ReaderContentWidget extends StatefulWidget {
   final bool hasNextChapter;
   final GlobalKey Function(int index)? getPageKey;
   final double defaultAspectRatio;
+  final VoidCallback? onNextPage;
+  final VoidCallback? onPreviousPage;
 
   const ReaderContentWidget({
     super.key,
@@ -51,6 +53,8 @@ class ReaderContentWidget extends StatefulWidget {
     this.hasNextChapter = true,
     this.getPageKey,
     this.defaultAspectRatio = 1.4,
+    this.onNextPage,
+    this.onPreviousPage,
   });
 
   @override
@@ -123,10 +127,35 @@ class _ReaderContentWidgetState extends State<ReaderContentWidget> {
     final screenWidth = MediaQuery.of(context).size.width;
     final contentWidth = math.min(screenWidth, 800.0);
 
+    // In paged mode: tap the left/right edge zones to turn pages, the center
+    // toggles the UI. Double-tap is only used by webtoon zoom, so it is
+    // disabled in paged mode to avoid delaying single taps.
+    final bool isPaged = !widget.isWebtoonMode && !widget.isLoading;
+
     return GestureDetector(
-        onTap: widget.onTap,
-        onDoubleTapDown: widget.onDoubleTapDown,
-        onDoubleTap: widget.onDoubleTap,
+        onTap: isPaged ? null : widget.onTap,
+        onTapUp: isPaged
+            ? (details) {
+                final width = context.size?.width ?? screenWidth;
+                final dx = details.localPosition.dx;
+                const zone = 0.3;
+                final bool isRight = dx > width * (1 - zone);
+                final bool isLeft = dx < width * zone;
+                if (isRight || isLeft) {
+                  // With RTL (reversed PageView) the right side goes back.
+                  final bool goNext = widget.isRtlMode ? isLeft : isRight;
+                  if (goNext) {
+                    widget.onNextPage?.call();
+                  } else {
+                    widget.onPreviousPage?.call();
+                  }
+                } else {
+                  widget.onTap();
+                }
+              }
+            : null,
+        onDoubleTapDown: isPaged ? null : widget.onDoubleTapDown,
+        onDoubleTap: isPaged ? null : widget.onDoubleTap,
         child: widget.isLoading
             ? Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
