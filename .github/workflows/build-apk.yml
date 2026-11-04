@@ -88,18 +88,47 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
+          REF_NAME: ${{ github.ref_name }}
+          COMMIT_SHA: ${{ github.sha }}
+        # Don't let a Telegram problem block the release step, but still show it as failed.
+        continue-on-error: true
         run: |
-          CAPTION="✅ *Build thành công!*%0A📱 *App:* Open-Manga-Reader%0A🌿 *Branch:* \`${{ github.ref_name }}\`%0A🔖 *Commit:* \`${{ github.sha }}\`%0A📝 *Message:* ${COMMIT_MSG}"
+          # Use HTML parse mode and escape the commit message: Markdown breaks on a
+          # lone "_" or "*" (e.g. "cloud_firestore"), and Telegram then rejects the upload.
+          html_escape() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
 
+          # Keep the caption well under Telegram's 1024-char limit.
+          MSG="${COMMIT_MSG:0:600}"
+          [ "${#COMMIT_MSG}" -gt 600 ] && MSG="${MSG}…"
+          MSG_HTML=$(printf '%s' "$MSG" | html_escape)
+
+          CAPTION=$(printf '✅ <b>Build thành công!</b>\n📱 <b>App:</b> Open-Manga-Reader\n🌿 <b>Branch:</b> <code>%s</code>\n🔖 <b>Commit:</b> <code>%s</code>\n📝 <b>Message:</b>\n%s' \
+            "$REF_NAME" "$COMMIT_SHA" "$MSG_HTML")
+
+          FAILED=0
           for apk in build/app/outputs/flutter-apk/openmanga-*.apk; do
             filename=$(basename "$apk")
             echo "Sending $filename to Telegram..."
-            curl -s -F chat_id="${TELEGRAM_CHAT_ID}" \
-                    -F document=@"$apk" \
-                    -F caption="📦 $filename%0A$CAPTION" \
-                    -F parse_mode="Markdown" \
-                    "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument" > /dev/null
+            FILE_CAPTION=$(printf '📦 <b>%s</b>\n%s' "$filename" "$CAPTION")
+
+            # --form-string stops curl from interpreting ';', '"' or '<' inside the caption.
+            RESPONSE=$(curl -sS --max-time 300 \
+              -F chat_id="${TELEGRAM_CHAT_ID}" \
+              -F document=@"$apk" \
+              --form-string caption="$FILE_CAPTION" \
+              --form-string parse_mode="HTML" \
+              "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendDocument") || RESPONSE=""
+
+            if echo "$RESPONSE" | grep -q '"ok":true'; then
+              echo "✔ Sent $filename"
+            else
+              echo "::error::Failed to send $filename to Telegram: $RESPONSE"
+              FAILED=1
+            fi
+            sleep 2   # stay clear of Telegram's per-chat rate limit
           done
+
+          exit $FAILED
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
