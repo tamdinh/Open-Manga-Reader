@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:io' show Platform;
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,6 +13,7 @@ import '../../history/services/progression_service.dart';
 import '../../library/services/library_service.dart';
 import '../../manga_detail/services/manga_signalr_service.dart';
 import 'google_desktop_auth.dart';
+import 'user_profile_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -34,7 +36,14 @@ class AuthService {
   static bool get _isDesktop =>
       !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
 
+  final UserProfileService _profileService = UserProfileService();
+
   Future<void> _handlePostLogin(String idToken) async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser != null) {
+      // Fire-and-forget: never blocks or fails the backend login.
+      unawaited(_profileService.syncProfile(firebaseUser));
+    }
     await getIt<MangaApiService>().loginWithFirebase(idToken);
     await getIt<MangaApiService>().fetchCurrentUserProfile();
     await getIt<NotificationService>().syncFcmToken();
@@ -60,6 +69,72 @@ class AuthService {
     } catch (e) {
       debugPrint('ensureBackendSession error: $e');
     }
+  }
+
+  Future<User?> _finishEmailAuth(UserCredential credential) async {
+    final idToken = await credential.user?.getIdToken();
+    if (idToken != null) {
+      await _handlePostLogin(idToken);
+    }
+    return credential.user;
+  }
+
+  Future<User?> signInWithEmail(String email, String password) async {
+    final credential = await _auth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    return _finishEmailAuth(credential);
+  }
+
+  Future<User?> signUpWithEmail(
+    String email,
+    String password, {
+    String? displayName,
+  }) async {
+    final credential = await _auth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final name = displayName?.trim();
+    if (name != null && name.isNotEmpty) {
+      await credential.user?.updateDisplayName(name);
+    }
+    try {
+      await credential.user?.sendEmailVerification();
+    } catch (e) {
+      debugPrint('Send verification email error: $e');
+    }
+    return _finishEmailAuth(credential);
+  }
+
+  Future<void> sendPasswordReset(String email) =>
+      _auth.sendPasswordResetEmail(email: email.trim());
+
+  static String describeAuthError(Object e) {
+    if (e is FirebaseAuthException) {
+      switch (e.code) {
+        case 'invalid-email':
+          return 'The email address is not valid.';
+        case 'user-not-found':
+        case 'wrong-password':
+        case 'invalid-credential':
+          return 'Incorrect email or password.';
+        case 'email-already-in-use':
+          return 'An account already exists for that email.';
+        case 'weak-password':
+          return 'Password is too weak (min 6 characters).';
+        case 'user-disabled':
+          return 'This account has been disabled.';
+        case 'too-many-requests':
+          return 'Too many attempts. Try again later.';
+        case 'network-request-failed':
+          return 'Network error. Check your connection.';
+        default:
+          return e.message ?? 'Authentication failed (${e.code}).';
+      }
+    }
+    return 'Error: $e';
   }
 
   Future<User?> signInWithGoogle() async {

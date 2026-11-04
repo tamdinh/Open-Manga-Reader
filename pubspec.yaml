@@ -45,6 +45,7 @@ dependencies:
   flutter_cache_manager: ^3.4.5
   open_filex: ^5.0.0
   web: ^1.1.1
+  cloud_firestore: ^6.10.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

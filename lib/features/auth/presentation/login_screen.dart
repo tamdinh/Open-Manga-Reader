@@ -5,6 +5,7 @@ import '../../../core/network/api_config.dart';
 import '../../../core/widgets/alert_banner.dart';
 import '../../../routes/app_pages.dart';
 import '../services/auth_service.dart';
+import 'email_auth_sheet.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,10 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
   }
 
-  Future<void> _handleGoogleSignIn() async {
-    if (_isLoading) return;
-
-    // Block sign in if Base API is not configured
+  /// Returns false (and routes to API settings) if no Base API is configured.
+  Future<bool> _ensureApiConfigured() async {
     final activeConfig = await ApiConfigManager.getActiveApiConfig();
     final configs = await ApiConfigManager.loadApiConfigs();
     if (activeConfig == null ||
@@ -56,8 +55,38 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         Navigator.pushNamed(context, AppRoutes.baseApiSetting);
       }
-      return;
+      return false;
     }
+    return true;
+  }
+
+  void _leaveAfterSignIn() {
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context, true);
+    } else {
+      Navigator.pushReplacementNamed(context, AppRoutes.home);
+    }
+  }
+
+  Future<void> _handleEmailSignIn() async {
+    if (_isLoading) return;
+    if (!await _ensureApiConfigured() || !mounted) return;
+
+    final ok = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      constraints: const BoxConstraints(maxWidth: 480),
+      builder: (_) => EmailAuthSheet(authService: _authService),
+    );
+    if (ok == true && mounted) _leaveAfterSignIn();
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    if (_isLoading) return;
+
+    // Block sign in if Base API is not configured
+    if (!await _ensureApiConfigured()) return;
 
     setState(() {
       _isLoading = true;
@@ -198,16 +227,26 @@ class _LoginScreenState extends State<LoginScreen> {
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.4,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 30),
+              height: MediaQuery.of(context).size.height * 0.46,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
+              child: SingleChildScrollView(
+               child: Column(
                 children: [
                   _buildButton(
                     context: context,
                     icon: const FaIcon(FontAwesomeIcons.google),
                     label: _isLoading ? "Signing in..." : "Sign In with Google",
                     onPressed: _isLoading ? null : _handleGoogleSignIn,
+                    backgroundColor: isDark ? AppColors.slate800 : Colors.white,
+                    textColor: isDark ? Colors.white : AppColors.slate800,
+                  ),
+                  const SizedBox(height: 10),
+                  _buildButton(
+                    context: context,
+                    icon: const Icon(Icons.email_outlined),
+                    label: "Sign In with Email",
+                    onPressed: _isLoading ? null : _handleEmailSignIn,
                     backgroundColor: isDark ? AppColors.slate800 : Colors.white,
                     textColor: isDark ? Colors.white : AppColors.slate800,
                   ),
@@ -248,7 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(height: 20),
                   Text.rich(
                     TextSpan(
                       style: TextStyle(
@@ -277,6 +316,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                 ],
+               ),
               ),
             ),
           ),

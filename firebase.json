@@ -1,1 +1,44 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"openmanga-c5dca","appId":"1:12202664535:android:332836313a6ab1419cf912","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"openmanga-c5dca","configurations":{"android":"1:12202664535:android:332836313a6ab1419cf912","ios":"1:933021714823:ios:a4b33d526b8ef3cb6beb22","macos":"1:933021714823:ios:a4b33d526b8ef3cb6beb22","web":"1:933021714823:web:dad6f9ef3e4ef64e6beb22","windows":"1:933021714823:web:a200daf885f9f49a6beb22"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "openmanga-c5dca",
+          "appId": "1:12202664535:android:332836313a6ab1419cf912",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "openmanga-c5dca",
+          "configurations": {
+            "android": "1:12202664535:android:332836313a6ab1419cf912",
+            "ios": "1:12202664535:ios:720a5403e33667eb9cf912",
+            "macos": "1:12202664535:ios:720a5403e33667eb9cf912",
+            "web": "1:12202664535:web:dc6a0bae78475bc69cf912",
+            "windows": "1:12202664535:web:dc6a0bae78475bc69cf912"
+          }
+        }
+      }
+    }
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Open Manga",
+        "supportEmail": "tamdinh@gmail.com",
+        "authorizedRedirectUris": [
+          "https://openmanga-c5dca.firebaseapp.com/__/auth/handler",
+          "http://localhost"
+        ]
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json",
+    "database": "(default)",
+    "location": "asia-southeast1"
+  }
+}
