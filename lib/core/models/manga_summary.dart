@@ -11,6 +11,8 @@ class MangaSummary {
   final String? description;
   final String? descriptionVi;
   final String? descriptionLanguage;
+  /// Descriptions keyed by lowercase language code (`descriptions` from the API); "und" = unknown language.
+  final Map<String, String> descriptions;
   final String? imageUrl;
   final String? localImageUrl;
   final int? thumbnailSize;
@@ -39,6 +41,7 @@ class MangaSummary {
     this.description,
     this.descriptionVi,
     this.descriptionLanguage,
+    this.descriptions = const {},
     this.imageUrl,
     this.localImageUrl,
     this.thumbnailSize,
@@ -73,6 +76,7 @@ class MangaSummary {
       description: json['description'] as String?,
       descriptionVi: json['descriptionVi'] as String?,
       descriptionLanguage: json['descriptionLanguage'] as String?,
+      descriptions: _parseDescriptions(json['descriptions']),
       imageUrl: json['imageUrl'] as String?,
       localImageUrl: json['localImageUrl'] as String?,
       thumbnailSize: json['thumbnailSize'] as int?,
@@ -102,6 +106,17 @@ class MangaSummary {
     );
   }
 
+  static Map<String, String> _parseDescriptions(dynamic raw) {
+    if (raw is! Map) return const {};
+    final result = <String, String>{};
+    raw.forEach((k, v) {
+      if (v is String && v.trim().isNotEmpty) {
+        result[k.toString().toLowerCase()] = v;
+      }
+    });
+    return result;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -116,6 +131,7 @@ class MangaSummary {
       'description': description,
       'descriptionVi': descriptionVi,
       'descriptionLanguage': descriptionLanguage,
+      'descriptions': descriptions,
       'imageUrl': imageUrl,
       'localImageUrl': localImageUrl,
       'thumbnailSize': thumbnailSize,

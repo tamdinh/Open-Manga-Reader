@@ -199,6 +199,7 @@ class MangaDetail {
       description: summary.description ?? 'No description available',
       descriptionVi: summary.descriptionVi,
       descriptionLanguage: summary.descriptionLanguage,
+      descriptions: summary.descriptions,
       imageUrl: summary.imageUrl,
       localImageUrl: summary.localImageUrl,
       rating: summary.rating,
