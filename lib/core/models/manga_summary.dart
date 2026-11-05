@@ -13,6 +13,8 @@ class MangaSummary {
   final String? descriptionLanguage;
   /// Descriptions keyed by lowercase language code (`descriptions` from the API); "und" = unknown language.
   final Map<String, String> descriptions;
+  /// Localized titles keyed by lowercase language code (`titles` from the API).
+  final Map<String, String> titles;
   final String? imageUrl;
   final String? localImageUrl;
   final int? thumbnailSize;
@@ -42,6 +44,7 @@ class MangaSummary {
     this.descriptionVi,
     this.descriptionLanguage,
     this.descriptions = const {},
+    this.titles = const {},
     this.imageUrl,
     this.localImageUrl,
     this.thumbnailSize,
@@ -77,6 +80,7 @@ class MangaSummary {
       descriptionVi: json['descriptionVi'] as String?,
       descriptionLanguage: json['descriptionLanguage'] as String?,
       descriptions: _parseDescriptions(json['descriptions']),
+      titles: _parseDescriptions(json['titles']),
       imageUrl: json['imageUrl'] as String?,
       localImageUrl: json['localImageUrl'] as String?,
       thumbnailSize: json['thumbnailSize'] as int?,
@@ -132,6 +136,7 @@ class MangaSummary {
       'descriptionVi': descriptionVi,
       'descriptionLanguage': descriptionLanguage,
       'descriptions': descriptions,
+      'titles': titles,
       'imageUrl': imageUrl,
       'localImageUrl': localImageUrl,
       'thumbnailSize': thumbnailSize,
@@ -147,6 +152,12 @@ class MangaSummary {
       'totalView': totalView,
       'latestChapter': latestChapter?.toJson(),
     };
+  }
+
+  /// Title in [language], falling back to the primary [title].
+  String titleFor(String? language) {
+    final localized = language == null ? null : titles[language.toLowerCase()];
+    return (localized != null && localized.trim().isNotEmpty) ? localized : title;
   }
 
   String get displayImageUrl {

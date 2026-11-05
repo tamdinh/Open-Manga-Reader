@@ -20,6 +20,8 @@ class MangaDetail {
   final String? descriptionLanguage;
   /// Optional extra per-language descriptions keyed by lowercase language code.
   final Map<String, String> descriptions;
+  /// Localized titles keyed by lowercase language code.
+  final Map<String, String> titles;
   final String? imageUrl;
   final String? localImageUrl;
   final double? rating;
@@ -32,6 +34,12 @@ class MangaDetail {
   final DateTime updatedAt;
   final String? url;
   final List<Chapter> chapters;
+
+  /// Title in [language], falling back to the primary [title].
+  String titleFor(String? language) {
+    final localized = language == null ? null : titles[language.toLowerCase()];
+    return (localized != null && localized.trim().isNotEmpty) ? localized : title;
+  }
 
   /// Description for [language], falling back to the generic description.
   String? descriptionFor(String? language) {
@@ -60,6 +68,7 @@ class MangaDetail {
     this.descriptionVi,
     this.descriptionLanguage,
     this.descriptions = const {},
+    this.titles = const {},
     this.imageUrl,
     this.localImageUrl,
     this.rating,
@@ -88,6 +97,7 @@ class MangaDetail {
     String? descriptionVi,
     String? descriptionLanguage,
     Map<String, String>? descriptions,
+    Map<String, String>? titles,
     String? imageUrl,
     String? localImageUrl,
     double? rating,
@@ -115,6 +125,7 @@ class MangaDetail {
       descriptionVi: descriptionVi ?? this.descriptionVi,
       descriptionLanguage: descriptionLanguage ?? this.descriptionLanguage,
       descriptions: descriptions ?? this.descriptions,
+      titles: titles ?? this.titles,
       imageUrl: imageUrl ?? this.imageUrl,
       localImageUrl: localImageUrl ?? this.localImageUrl,
       rating: rating ?? this.rating,
@@ -149,6 +160,7 @@ class MangaDetail {
       descriptionVi: map['descriptionVi'] as String?,
       descriptionLanguage: map['descriptionLanguage'] as String?,
       descriptions: _parseDescriptions(map['descriptions']),
+      titles: _parseDescriptions(map['titles']),
       imageUrl: map['imageUrl'] as String?,
       localImageUrl: map['localImageUrl'] as String?,
       rating: map['rating'] != null ? (map['rating'] as num).toDouble() : null,
@@ -200,6 +212,7 @@ class MangaDetail {
       descriptionVi: summary.descriptionVi,
       descriptionLanguage: summary.descriptionLanguage,
       descriptions: summary.descriptions,
+      titles: summary.titles,
       imageUrl: summary.imageUrl,
       localImageUrl: summary.localImageUrl,
       rating: summary.rating,
@@ -272,6 +285,7 @@ class MangaDetail {
       'descriptionVi': descriptionVi,
       'descriptionLanguage': descriptionLanguage,
       'descriptions': descriptions,
+      'titles': titles,
       'imageUrl': imageUrl,
       'localImageUrl': localImageUrl,
       'rating': rating,
