@@ -9,10 +9,6 @@ class MangaSummary {
   final List<String>? genres;
   final List<String>? categories;
   final String? description;
-  final String? descriptionVi;
-  final String? descriptionLanguage;
-  /// Descriptions keyed by lowercase language code (`descriptions` from the API); "und" = unknown language.
-  final Map<String, String> descriptions;
   /// Primary language of this book; other-language editions share [workId].
   final String? language;
   final String? workId;
@@ -42,9 +38,6 @@ class MangaSummary {
     this.genres,
     this.categories,
     this.description,
-    this.descriptionVi,
-    this.descriptionLanguage,
-    this.descriptions = const {},
     this.language,
     this.workId,
     this.imageUrl,
@@ -79,9 +72,6 @@ class MangaSummary {
           ?.map((e) => e as String)
           .toList(),
       description: json['description'] as String?,
-      descriptionVi: json['descriptionVi'] as String?,
-      descriptionLanguage: json['descriptionLanguage'] as String?,
-      descriptions: _parseDescriptions(json['descriptions']),
       language: json['language'] as String?,
       workId: json['workId'] as String?,
       imageUrl: json['imageUrl'] as String?,
@@ -113,17 +103,6 @@ class MangaSummary {
     );
   }
 
-  static Map<String, String> _parseDescriptions(dynamic raw) {
-    if (raw is! Map) return const {};
-    final result = <String, String>{};
-    raw.forEach((k, v) {
-      if (v is String && v.trim().isNotEmpty) {
-        result[k.toString().toLowerCase()] = v;
-      }
-    });
-    return result;
-  }
-
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -136,9 +115,6 @@ class MangaSummary {
       'genres': genres,
       'categories': categories,
       'description': description,
-      'descriptionVi': descriptionVi,
-      'descriptionLanguage': descriptionLanguage,
-      'descriptions': descriptions,
       'language': language,
       'workId': workId,
       'imageUrl': imageUrl,

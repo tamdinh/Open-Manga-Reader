@@ -85,8 +85,8 @@ class MangaDetailController extends ChangeNotifier {
   /// All chapters of the currently selected language (unfiltered by search/read state).
   List<Chapter> get languageChapters => _languageChapters;
 
-  /// Synopsis in the selected language (falls back to the generic description).
-  String? get description => manga.descriptionFor(_selectedLanguage);
+  /// Synopsis of this book (written in the book's language).
+  String? get description => manga.description;
 
   MangaProgression? get progression => _progression;
   List<MangaSummary> get recommendations => _recommendations;
@@ -829,9 +829,6 @@ class MangaDetailController extends ChangeNotifier {
       genres: manga.genres,
       categories: manga.categories,
       description: manga.description,
-      descriptionVi: manga.descriptionVi,
-      descriptionLanguage: manga.descriptionLanguage,
-      descriptions: manga.descriptions,
       imageUrl: manga.imageUrl,
       localImageUrl: manga.localImageUrl,
       rating: manga.rating,

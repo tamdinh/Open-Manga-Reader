@@ -14,12 +14,6 @@ class MangaDetail {
   final List<String>? genres;
   final List<String>? categories;
   final String? description;
-  /// Vietnamese description (`descriptionVi` from the API), if any.
-  final String? descriptionVi;
-  /// Language code of [description] (`descriptionLanguage` from the API).
-  final String? descriptionLanguage;
-  /// Optional extra per-language descriptions keyed by lowercase language code.
-  final Map<String, String> descriptions;
   /// Primary language of this book; other-language editions share [workId].
   final String? language;
   final String? workId;
@@ -36,19 +30,6 @@ class MangaDetail {
   final String? url;
   final List<Chapter> chapters;
 
-  /// Description for [language], falling back to the generic description.
-  String? descriptionFor(String? language) {
-    final key = language?.toLowerCase();
-    if (key != null) {
-      final localized = descriptions[key];
-      if (localized != null && localized.trim().isNotEmpty) return localized;
-      if (key == 'vi' && (descriptionVi ?? '').trim().isNotEmpty) {
-        return descriptionVi;
-      }
-    }
-    return description;
-  }
-
   MangaDetail({
     required this.id,
     required this.malId,
@@ -60,9 +41,6 @@ class MangaDetail {
     this.genres,
     this.categories,
     this.description,
-    this.descriptionVi,
-    this.descriptionLanguage,
-    this.descriptions = const {},
     this.language,
     this.workId,
     this.imageUrl,
@@ -90,9 +68,6 @@ class MangaDetail {
     List<String>? genres,
     List<String>? categories,
     String? description,
-    String? descriptionVi,
-    String? descriptionLanguage,
-    Map<String, String>? descriptions,
     String? language,
     String? workId,
     String? imageUrl,
@@ -119,9 +94,6 @@ class MangaDetail {
       genres: genres ?? this.genres,
       categories: categories ?? this.categories,
       description: description ?? this.description,
-      descriptionVi: descriptionVi ?? this.descriptionVi,
-      descriptionLanguage: descriptionLanguage ?? this.descriptionLanguage,
-      descriptions: descriptions ?? this.descriptions,
       language: language ?? this.language,
       workId: workId ?? this.workId,
       imageUrl: imageUrl ?? this.imageUrl,
@@ -155,9 +127,6 @@ class MangaDetail {
           ?.map((e) => e as String)
           .toList(),
       description: map['description'] as String? ?? 'No description available',
-      descriptionVi: map['descriptionVi'] as String?,
-      descriptionLanguage: map['descriptionLanguage'] as String?,
-      descriptions: _parseDescriptions(map['descriptions']),
       language: map['language'] as String?,
       workId: map['workId'] as String?,
       imageUrl: map['imageUrl'] as String?,
@@ -185,17 +154,6 @@ class MangaDetail {
     );
   }
 
-  static Map<String, String> _parseDescriptions(dynamic raw) {
-    if (raw is! Map) return const {};
-    final result = <String, String>{};
-    raw.forEach((k, v) {
-      if (v is String && v.trim().isNotEmpty) {
-        result[k.toString().toLowerCase()] = v;
-      }
-    });
-    return result;
-  }
-
   factory MangaDetail.fromMangaSummary(MangaSummary summary) {
     return MangaDetail(
       id: summary.id,
@@ -208,9 +166,6 @@ class MangaDetail {
       genres: summary.genres,
       categories: summary.categories,
       description: summary.description ?? 'No description available',
-      descriptionVi: summary.descriptionVi,
-      descriptionLanguage: summary.descriptionLanguage,
-      descriptions: summary.descriptions,
       language: summary.language,
       workId: summary.workId,
       imageUrl: summary.imageUrl,
@@ -282,9 +237,6 @@ class MangaDetail {
       'genres': genres,
       'categories': categories,
       'description': description,
-      'descriptionVi': descriptionVi,
-      'descriptionLanguage': descriptionLanguage,
-      'descriptions': descriptions,
       'language': language,
       'workId': workId,
       'imageUrl': imageUrl,
