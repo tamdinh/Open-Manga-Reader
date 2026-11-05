@@ -20,8 +20,9 @@ class MangaDetail {
   final String? descriptionLanguage;
   /// Optional extra per-language descriptions keyed by lowercase language code.
   final Map<String, String> descriptions;
-  /// Localized titles keyed by lowercase language code.
-  final Map<String, String> titles;
+  /// Primary language of this book; other-language editions share [workId].
+  final String? language;
+  final String? workId;
   final String? imageUrl;
   final String? localImageUrl;
   final double? rating;
@@ -34,12 +35,6 @@ class MangaDetail {
   final DateTime updatedAt;
   final String? url;
   final List<Chapter> chapters;
-
-  /// Title in [language], falling back to the primary [title].
-  String titleFor(String? language) {
-    final localized = language == null ? null : titles[language.toLowerCase()];
-    return (localized != null && localized.trim().isNotEmpty) ? localized : title;
-  }
 
   /// Description for [language], falling back to the generic description.
   String? descriptionFor(String? language) {
@@ -68,7 +63,8 @@ class MangaDetail {
     this.descriptionVi,
     this.descriptionLanguage,
     this.descriptions = const {},
-    this.titles = const {},
+    this.language,
+    this.workId,
     this.imageUrl,
     this.localImageUrl,
     this.rating,
@@ -97,7 +93,8 @@ class MangaDetail {
     String? descriptionVi,
     String? descriptionLanguage,
     Map<String, String>? descriptions,
-    Map<String, String>? titles,
+    String? language,
+    String? workId,
     String? imageUrl,
     String? localImageUrl,
     double? rating,
@@ -125,7 +122,8 @@ class MangaDetail {
       descriptionVi: descriptionVi ?? this.descriptionVi,
       descriptionLanguage: descriptionLanguage ?? this.descriptionLanguage,
       descriptions: descriptions ?? this.descriptions,
-      titles: titles ?? this.titles,
+      language: language ?? this.language,
+      workId: workId ?? this.workId,
       imageUrl: imageUrl ?? this.imageUrl,
       localImageUrl: localImageUrl ?? this.localImageUrl,
       rating: rating ?? this.rating,
@@ -160,7 +158,8 @@ class MangaDetail {
       descriptionVi: map['descriptionVi'] as String?,
       descriptionLanguage: map['descriptionLanguage'] as String?,
       descriptions: _parseDescriptions(map['descriptions']),
-      titles: _parseDescriptions(map['titles']),
+      language: map['language'] as String?,
+      workId: map['workId'] as String?,
       imageUrl: map['imageUrl'] as String?,
       localImageUrl: map['localImageUrl'] as String?,
       rating: map['rating'] != null ? (map['rating'] as num).toDouble() : null,
@@ -212,7 +211,8 @@ class MangaDetail {
       descriptionVi: summary.descriptionVi,
       descriptionLanguage: summary.descriptionLanguage,
       descriptions: summary.descriptions,
-      titles: summary.titles,
+      language: summary.language,
+      workId: summary.workId,
       imageUrl: summary.imageUrl,
       localImageUrl: summary.localImageUrl,
       rating: summary.rating,
@@ -285,7 +285,8 @@ class MangaDetail {
       'descriptionVi': descriptionVi,
       'descriptionLanguage': descriptionLanguage,
       'descriptions': descriptions,
-      'titles': titles,
+      'language': language,
+      'workId': workId,
       'imageUrl': imageUrl,
       'localImageUrl': localImageUrl,
       'rating': rating,
