@@ -76,8 +76,22 @@ else
     echo "   -> Generated build/web/_redirects"
 fi
 
+# 3b. Everything in build/web is public, and flutter_dotenv ships .env as build/web/assets/.env.
+# The web app signs in with a Firebase popup and does not use the desktop OAuth client, so remove those keys
+# from the deployed copy, and refuse to deploy if anything that looks like a secret is still in it.
+PUBLIC_ENV="$PROJECT_DIR/build/web/assets/.env"
+if [ -f "$PUBLIC_ENV" ]; then
+    grep -Ev '^[[:space:]]*GOOGLE_DESKTOP_CLIENT_(ID|SECRET)[[:space:]]*=' "$PUBLIC_ENV" > "$PUBLIC_ENV.tmp" || true
+    mv -f "$PUBLIC_ENV.tmp" "$PUBLIC_ENV"
+    if grep -Eq '^[[:space:]]*[A-Za-z0-9_]*(SECRET|PASSWORD|PRIVATE)[A-Za-z0-9_]*[[:space:]]*=' "$PUBLIC_ENV"; then
+        echo "Error: build/web/assets/.env still contains secret-looking keys (public file). Not deploying."
+        exit 1
+    fi
+    echo "   -> Removed desktop OAuth keys from the public assets/.env"
+fi
+
 # 4. Deploy to Cloudflare Pages
-echo "[3/3] Deploying to Cloudflare Pages (open-manga-reader)..."
+echo "[3/3] Deploying to Cloudflare Pages (open-manga)..."
 
 if ! command -v npx >/dev/null 2>&1; then
     echo "Error: 'npx' (Node.js) is not installed on this VPS."
@@ -85,10 +99,10 @@ if ! command -v npx >/dev/null 2>&1; then
     exit 1
 fi
 
-npx wrangler pages deploy build/web --project-name=open-manga-reader --commit-dirty=true
+npx wrangler pages deploy build/web --project-name=open-manga --branch=main --commit-dirty=true
 
 echo ""
 echo "============================================="
 echo " Deployment completed successfully!"
-echo " Live URL: https://open-manga-reader.pages.dev"
+echo " Live URL: https://open-manga.pages.dev"
 echo "============================================="

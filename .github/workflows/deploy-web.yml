@@ -53,10 +53,22 @@ jobs:
             echo "/*    /index.html   200" > build/web/_redirects
           fi
 
+      - name: Keep secrets out of the public build
+        run: |
+          # build/web is public and flutter_dotenv ships .env as assets/.env; the web app does not use the desktop OAuth client.
+          if [ -f build/web/assets/.env ]; then
+            grep -Ev '^[[:space:]]*GOOGLE_DESKTOP_CLIENT_(ID|SECRET)[[:space:]]*=' build/web/assets/.env > build/web/assets/.env.tmp || true
+            mv -f build/web/assets/.env.tmp build/web/assets/.env
+            if grep -Eq '^[[:space:]]*[A-Za-z0-9_]*(SECRET|PASSWORD|PRIVATE)[A-Za-z0-9_]*[[:space:]]*=' build/web/assets/.env; then
+              echo "build/web/assets/.env still contains secret-looking keys; not deploying."
+              exit 1
+            fi
+          fi
+
       - name: Deploy to Cloudflare Pages
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           export CLOUDFLARE_ACCOUNT_ID="${CLOUDFLARE_ACCOUNT_ID:-0583d4a5b3469cf89e54b33fd8d7f2a1}"
-          npx wrangler pages deploy build/web --project-name=open-manga-reader --commit-dirty=true
+          npx wrangler pages deploy build/web --project-name=open-manga --branch=main --commit-dirty=true

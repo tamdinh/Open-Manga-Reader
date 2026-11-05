@@ -184,7 +184,7 @@ lib/
 
 ## 🌐 Web Deployment (Cloudflare Pages)
 
-Open Manga Reader supports building and deploying as a Single-Page Application (SPA) on **Cloudflare Pages** (`open-manga-reader.pages.dev`).
+Open Manga Reader supports building and deploying as a Single-Page Application (SPA) on **Cloudflare Pages** (`open-manga.pages.dev`).
 
 ### 1. One-Click Deploy on Windows
 You can run the automated script directly:

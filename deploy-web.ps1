@@ -55,16 +55,31 @@ if (Test-Path $redirectsSrc) {
     Write-Host "   -> Created build/web/_redirects (SPA fallback)" -ForegroundColor Green
 }
 
+# 3b. Everything in build/web is public, and flutter_dotenv ships .env as build/web/assets/.env.
+# The web app signs in with a Firebase popup and does not use the desktop OAuth client, so remove those keys
+# from the deployed copy, and refuse to deploy if anything that looks like a secret is still in it.
+$publicEnv = Join-Path $projectDir "build\web\assets\.env"
+if (Test-Path $publicEnv) {
+    $kept = Get-Content $publicEnv | Where-Object { $_ -notmatch '^\s*GOOGLE_DESKTOP_CLIENT_(ID|SECRET)\s*=' }
+    [IO.File]::WriteAllLines($publicEnv, $kept, (New-Object System.Text.UTF8Encoding($false)))
+    $leaked = $kept | Where-Object { $_ -match '^\s*[A-Za-z0-9_]*(SECRET|PASSWORD|PRIVATE)[A-Za-z0-9_]*\s*=' }
+    if ($leaked) {
+        Write-Error "build/web/assets/.env still contains secret-looking keys (public file). Remove them from .env or from this script's list. Not deploying."
+        exit 1
+    }
+    Write-Host "   -> Removed desktop OAuth keys from the public assets/.env" -ForegroundColor Green
+}
+
 # 4. Deploy via Wrangler
-Write-Host "[3/3] Deploying to Cloudflare Pages (open-manga-reader)..." -ForegroundColor Yellow
-$deployCmd = "npx wrangler pages deploy build/web --project-name=open-manga-reader --commit-dirty=true"
+Write-Host "[3/3] Deploying to Cloudflare Pages (open-manga)..." -ForegroundColor Yellow
+$deployCmd = "npx wrangler pages deploy build/web --project-name=open-manga --branch=main --commit-dirty=true"
 cmd.exe /c $deployCmd
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host ""
     Write-Host "=============================================" -ForegroundColor Green
     Write-Host " Deployment completed successfully!" -ForegroundColor Green
-    Write-Host " Live URL: https://open-manga-reader.pages.dev" -ForegroundColor Cyan
+    Write-Host " Live URL: https://open-manga.pages.dev" -ForegroundColor Cyan
     Write-Host "=============================================" -ForegroundColor Green
 } else {
     Write-Host ""
