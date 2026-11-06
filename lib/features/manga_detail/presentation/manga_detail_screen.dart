@@ -280,6 +280,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
     final heroImageUrl = _apiService.getLocalImageUrl(
       widget.manga.localImageUrl,
       widget.manga.imageUrl,
+      animated: true,
     );
     if (heroImageUrl.isEmpty) return;
     MangaCoverViewer.show(
@@ -297,6 +298,7 @@ class _MangaDetailScreenState extends State<MangaDetailScreen>
     final heroImageUrl = _apiService.getLocalImageUrl(
       widget.manga.localImageUrl,
       widget.manga.imageUrl,
+      animated: true,
     );
 
     return PopScope(

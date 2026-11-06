@@ -713,7 +713,20 @@ class MangaApiService {
     return '$baseUrl$cleanPath';
   }
 
-  String getLocalImageUrl(String? localPath, String? remotePath) {
+  /// Moving covers are shown as one still picture everywhere except where [animated] is true (the manga page).
+  String getLocalImageUrl(
+    String? localPath,
+    String? remotePath, {
+    bool animated = false,
+  }) {
+    final url = _resolveLocalImageUrl(localPath, remotePath);
+    if (animated || url.contains('?')) return url;
+
+    final isCover = RegExp(r'/thumbnail[^/]*\.webp$').hasMatch(url);
+    return isCover ? '$url?still=1' : url;
+  }
+
+  String _resolveLocalImageUrl(String? localPath, String? remotePath) {
     if (localPath == null || localPath.isEmpty) {
       return getImageUrl(remotePath);
     }
