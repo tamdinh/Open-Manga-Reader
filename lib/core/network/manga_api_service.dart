@@ -720,10 +720,12 @@ class MangaApiService {
     bool animated = false,
   }) {
     final url = _resolveLocalImageUrl(localPath, remotePath);
-    if (animated || url.contains('?')) return url;
+    if (url.contains('?')) return url;
 
-    final isCover = RegExp(r'/thumbnail[^/]*\.webp$').hasMatch(url);
-    return isCover ? '$url?still=1' : url;
+    final isCover = RegExp(r'/thumbnail[^/]*\.(webp|avif)$', caseSensitive: false).hasMatch(url);
+    if (isCover && !animated) return '$url?still=1';
+    if (url.toLowerCase().endsWith('.avif')) return '$url?still=1';
+    return url;
   }
 
   String _resolveLocalImageUrl(String? localPath, String? remotePath) {
