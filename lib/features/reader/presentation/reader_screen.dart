@@ -998,6 +998,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                   child: ReaderContentWidget(
                     chapterId: _controller.chapterId,
                     pageUrls: _controller.pageUrls,
+                    pageScrambles: _controller.pageScrambles,
                     httpHeaders: _controller.content.httpHeaders,
                     isLoading: _controller.isLoading,
                     showUI: _controller.showUI,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/page_scramble.dart';
 import '../../../../core/utils/url_utils.dart';
 import 'app_network_image.dart';
 import 'dart:math' as math;
@@ -34,6 +35,9 @@ class ReaderContentWidget extends StatefulWidget {
   /// A signed page link expired (403). The reader fetches the chapter again and passes new [pageUrls].
   final VoidCallback? onPageLinkExpired;
 
+  /// One entry per page (null where a page is not scrambled). Empty or shorter: those pages are shown as they are.
+  final List<PageScramble?>? pageScrambles;
+
   const ReaderContentWidget({
     super.key,
     this.chapterId,
@@ -59,6 +63,7 @@ class ReaderContentWidget extends StatefulWidget {
     this.onNextPage,
     this.onPreviousPage,
     this.onPageLinkExpired,
+    this.pageScrambles,
   });
 
   @override
@@ -67,6 +72,11 @@ class ReaderContentWidget extends StatefulWidget {
 
 class _ReaderContentWidgetState extends State<ReaderContentWidget> {
   final Set<String> _precachedUrls = {};
+
+  PageScramble? _scrambleAt(int index) {
+    final list = widget.pageScrambles;
+    return (list != null && index >= 0 && index < list.length) ? list[index] : null;
+  }
   int _lastPrecachedIndex = -1;
 
   @override
@@ -108,7 +118,8 @@ class _ReaderContentWidgetState extends State<ReaderContentWidget> {
                 url,
                 cacheKey: UrlUtils.cacheKey(url),
                 headers: widget.httpHeaders,
-                maxWidth: memCacheWidth,
+                // a scrambled page is shown at its own size: warm the file, not a resized copy
+                maxWidth: _scrambleAt(targetIndex) != null ? null : memCacheWidth,
               ),
               context,
               onError: (exception, stackTrace) {
@@ -216,6 +227,7 @@ class _ReaderContentWidgetState extends State<ReaderContentWidget> {
                                 child: AppNetworkImage(
                                   imageUrl: url,
                                   onLinkExpired: widget.onPageLinkExpired,
+                                  scramble: _scrambleAt(index),
                                   httpHeaders: widget.httpHeaders,
                                   fit: BoxFit.fitWidth,
                                   width: contentWidth,
@@ -454,6 +466,7 @@ class _ReaderContentWidgetState extends State<ReaderContentWidget> {
                         child: AppNetworkImage(
                           imageUrl: url,
                           onLinkExpired: widget.onPageLinkExpired,
+                          scramble: _scrambleAt(index),
                           httpHeaders: widget.httpHeaders,
                           fit: BoxFit.contain,
                           debugLabel: 'P. ${index + 1}/${widget.pageUrls.length}',

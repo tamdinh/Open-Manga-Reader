@@ -1,3 +1,5 @@
+import '../utils/page_scramble.dart';
+
 class ChapterPage {
   final String url;
   final int width;
@@ -5,13 +7,23 @@ class ChapterPage {
   final String? alternateUrl;
   final bool isFallback;
 
+  /// Present while the server scrambles pages: how to put the tiles of this page back (see [PageScrambler]).
+  final int? scrambleSeed;
+  final int? scrambleTiles;
+
   const ChapterPage({
     required this.url,
     this.width = 0,
     this.height = 0,
     this.alternateUrl,
     this.isFallback = false,
+    this.scrambleSeed,
+    this.scrambleTiles,
   });
+
+  PageScramble? get scramble => (scrambleSeed != null && scrambleTiles != null && scrambleTiles! > 0)
+      ? PageScramble(seed: scrambleSeed!, tiles: scrambleTiles!)
+      : null;
 
   /// The aspect ratio (height / width) of the page image, or null if dimensions are unknown.
   double? get aspectRatio => (width > 0 && height > 0) ? (height / width) : null;
@@ -46,6 +58,8 @@ class ChapterPage {
       height: height,
       alternateUrl: map['alternateUrl'] as String?,
       isFallback: map['isFallback'] as bool? ?? false,
+      scrambleSeed: (map['scrambleSeed'] as num?)?.toInt(),
+      scrambleTiles: (map['scrambleTiles'] as num?)?.toInt(),
     );
   }
 
@@ -55,6 +69,8 @@ class ChapterPage {
     int? height,
     String? alternateUrl,
     bool? isFallback,
+    int? scrambleSeed,
+    int? scrambleTiles,
   }) {
     return ChapterPage(
       url: url ?? this.url,
@@ -62,6 +78,8 @@ class ChapterPage {
       height: height ?? this.height,
       alternateUrl: alternateUrl ?? this.alternateUrl,
       isFallback: isFallback ?? this.isFallback,
+      scrambleSeed: scrambleSeed ?? this.scrambleSeed,
+      scrambleTiles: scrambleTiles ?? this.scrambleTiles,
     );
   }
 
@@ -72,6 +90,8 @@ class ChapterPage {
       'height': height,
       if (alternateUrl != null) 'alternateUrl': alternateUrl,
       'isFallback': isFallback,
+      if (scrambleSeed != null) 'scrambleSeed': scrambleSeed,
+      if (scrambleTiles != null) 'scrambleTiles': scrambleTiles,
     };
   }
 
@@ -87,9 +107,11 @@ class ChapterPage {
         other.width == width &&
         other.height == height &&
         other.alternateUrl == alternateUrl &&
-        other.isFallback == isFallback;
+        other.isFallback == isFallback &&
+        other.scrambleSeed == scrambleSeed &&
+        other.scrambleTiles == scrambleTiles;
   }
 
   @override
-  int get hashCode => Object.hash(url, width, height, alternateUrl, isFallback);
+  int get hashCode => Object.hash(url, width, height, alternateUrl, isFallback, scrambleSeed, scrambleTiles);
 }

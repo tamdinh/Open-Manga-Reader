@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart' as fcm;
 import 'package:flutter_avif/flutter_avif.dart';
+import '../../../../core/utils/page_scramble.dart';
 import '../../../../core/utils/url_utils.dart';
+import '../../../../core/widgets/scrambled_image.dart';
 
 class AppNetworkImage extends StatefulWidget {
   final String imageUrl;
@@ -28,6 +30,10 @@ class AppNetworkImage extends StatefulWidget {
   /// and passes the new link as [imageUrl].
   final VoidCallback? onLinkExpired;
 
+  /// Set for a page the server scrambled: the tiles are put back once it has loaded. Such a page is never resized on
+  /// decode (the grid depends on its exact size), so the cache-size hints are ignored for it.
+  final PageScramble? scramble;
+
   const AppNetworkImage({
     super.key,
     required this.imageUrl,
@@ -46,6 +52,7 @@ class AppNetworkImage extends StatefulWidget {
     this.onAspectRatioResolved,
     this.debugLabel,
     this.onLinkExpired,
+    this.scramble,
   });
 
   @override
@@ -451,10 +458,10 @@ class AppNetworkImageState extends State<AppNetworkImage> {
       fit: widget.fit,
       width: widget.width,
       height: widget.height,
-      memCacheWidth: _disableMemCache ? null : widget.memCacheWidth,
-      memCacheHeight: _disableMemCache ? null : widget.memCacheHeight,
-      maxHeightDiskCache: widget.maxHeightDiskCache,
-      maxWidthDiskCache: widget.maxWidthDiskCache,
+      memCacheWidth: (_disableMemCache || widget.scramble != null) ? null : widget.memCacheWidth,
+      memCacheHeight: (_disableMemCache || widget.scramble != null) ? null : widget.memCacheHeight,
+      maxHeightDiskCache: widget.scramble != null ? null : widget.maxHeightDiskCache,
+      maxWidthDiskCache: widget.scramble != null ? null : widget.maxWidthDiskCache,
       unsupportedImageBuilder: (context, url, bytes) {
         return AvifImage.memory(
           bytes,
@@ -523,7 +530,23 @@ class AppNetworkImageState extends State<AppNetworkImage> {
           ).evict();
         } catch (_) {}
       },
-      imageBuilder: widget.onAspectRatioResolved != null
+      imageBuilder: widget.scramble != null
+          ? (context, imageProvider) => ScrambledImage(
+                provider: imageProvider,
+                scramble: widget.scramble!,
+                fit: widget.fit,
+                width: widget.width,
+                height: widget.height,
+                placeholder: _buildPlaceholder(),
+                errorBuilder: (context, error) => _buildErrorWidget(),
+                onAspectRatio: (ratio) {
+                  if (!_aspectRatioReported && widget.onAspectRatioResolved != null && mounted) {
+                    _aspectRatioReported = true;
+                    widget.onAspectRatioResolved!.call(ratio);
+                  }
+                },
+              )
+          : widget.onAspectRatioResolved != null
           ? (context, imageProvider) {
               if (!_aspectRatioReported) {
                 final stream = imageProvider.resolve(const ImageConfiguration());

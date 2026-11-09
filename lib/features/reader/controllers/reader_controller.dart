@@ -8,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../../core/di/injection.dart';
 import '../../../core/network/manga_api_service.dart';
+import '../../../core/utils/page_scramble.dart';
 import '../../../core/utils/url_utils.dart';
 import '../../../core/utils/web_fullscreen_helper.dart';
 import '../../download/services/download_service.dart';
@@ -25,6 +26,7 @@ class ReaderController extends ChangeNotifier {
   bool _disposed = false;
 
   late List<String> _pageUrls;
+  List<PageScramble?> _pageScrambles = const [];
   late String _chapterId;
   late double _currentChapterNumber;
   final Map<int, double> _pageAspectRatios = {};
@@ -64,6 +66,9 @@ class ReaderController extends ChangeNotifier {
   // Getters & ValueNotifiers for isolated sub-tree rendering
   ReaderContent get content => _content;
   List<String> get pageUrls => _pageUrls;
+
+  /// Per page, how to put its tiles back (null: not scrambled). Same order as [pageUrls].
+  List<PageScramble?> get pageScrambles => _pageScrambles;
   String get chapterId => _chapterId;
   double get currentChapterNumber => _currentChapterNumber;
   Map<int, double> get pageAspectRatios => _pageAspectRatios;
@@ -118,6 +123,7 @@ class ReaderController extends ChangeNotifier {
 
   void _init() {
     _pageUrls = _content.pageUrls;
+    _pageScrambles = _content.pages?.map((p) => p.scramble).toList() ?? const [];
     _chapterId = _content.chapterId;
     _currentChapterNumber = _content.currentChapterNumber;
 
@@ -567,8 +573,9 @@ class ReaderController extends ChangeNotifier {
       );
 
       List<String> targetPageUrls;
+      List<PageScramble?> targetScrambles = const [];
       if (downloaded != null && downloaded.isComplete) {
-        targetPageUrls = downloaded.pageFilePaths;
+        targetPageUrls = downloaded.pageFilePaths; // saved already in order
       } else {
         if (_apiService == null) return;
         _apiService.incrementChapterView(
@@ -591,6 +598,7 @@ class ReaderController extends ChangeNotifier {
         targetPageUrls = pages
             .map((p) => _apiService.getLocalImageUrl(p.url, null))
             .toList();
+        targetScrambles = pages.map((p) => p.scramble).toList();
       }
 
       PaintingBinding.instance.imageCache.clearLiveImages();
@@ -606,6 +614,7 @@ class ReaderController extends ChangeNotifier {
       );
 
       _pageUrls = targetPageUrls;
+      _pageScrambles = targetScrambles;
       _chapterId = targetChapter.id;
       _currentChapterNumber = targetChapter.chapterNumber;
       _progressNotifier.value = targetPageUrls.length > 1
@@ -659,6 +668,7 @@ class ReaderController extends ChangeNotifier {
         return;
       }
       _pageUrls = pages.map((p) => api.getLocalImageUrl(p.url, null)).toList();
+      _pageScrambles = pages.map((p) => p.scramble).toList();
       _safeNotifyListeners();
     } catch (e) {
       if (kDebugMode) debugPrint('Failed to refresh page links: $e');

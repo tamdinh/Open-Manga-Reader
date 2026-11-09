@@ -6,6 +6,7 @@ import '../../../core/di/injection.dart';
 import '../../../core/models/chapter_page.dart';
 import '../../../core/network/manga_api_service.dart';
 import '../../../core/storage/hive_storage.dart';
+import '../../../core/utils/page_scramble.dart';
 import '../../../core/utils/url_utils.dart';
 import '../../manga_detail/models/manga_detail.dart';
 import '../../settings/services/storage_service.dart';
@@ -290,6 +291,26 @@ class DownloadService {
       final List<String> downloadedFilePaths = [];
       int totalSizeBytes = 0;
 
+      // A scrambled page is saved already put back in order (as PNG): the offline reader then needs no key and shows
+      // the file like any other. A page that is not scrambled is saved as it came.
+      Future<void> fetchPage(String url, ChapterPage source, String path) async {
+        final scramble = source.scramble;
+        if (scramble == null) {
+          await _dio.download(url, path, cancelToken: cancelToken);
+          return;
+        }
+
+        final response = await _dio.get<List<int>>(
+          url,
+          options: Options(responseType: ResponseType.bytes),
+          cancelToken: cancelToken,
+        );
+        final bytes = Uint8List.fromList(response.data ?? const <int>[]);
+        if (bytes.isEmpty) throw Exception('Empty page image.');
+        final png = await PageScrambler.unscrambleToPng(bytes, scramble);
+        await File(path).writeAsBytes(png ?? bytes);
+      }
+
       for (int i = 0; i < pages.length; i++) {
         if (cancelToken.isCancelled) {
           throw DioException(
@@ -299,7 +320,7 @@ class DownloadService {
         }
 
         final page = pages[i];
-        final ext = _getImageExtension(page.url);
+        final ext = page.scramble != null ? '.png' : _getImageExtension(page.url);
         final fileName = '${(i + 1).toString().padLeft(3, '0')}$ext';
         final filePath = UrlUtils.normalizeLocalFilePath(
           '${chapterDir.path}/$fileName',
@@ -314,11 +335,7 @@ class DownloadService {
           final targetUrl = _apiService.getLocalImageUrl(page.url, null);
           try {
             try {
-              await _dio.download(
-                targetUrl,
-                filePath,
-                cancelToken: cancelToken,
-              );
+              await fetchPage(targetUrl, page, filePath);
             } on DioException catch (err) {
               // 403 on a signed link: it expired while downloading. Ask for new links once and retry this page.
               if (err.response?.statusCode != 403 ||
@@ -335,10 +352,10 @@ class DownloadService {
               );
               if (fresh.length != pages.length) rethrow;
               pages = fresh;
-              await _dio.download(
+              await fetchPage(
                 _apiService.getLocalImageUrl(pages[i].url, null),
+                pages[i],
                 filePath,
-                cancelToken: cancelToken,
               );
             }
           } catch (err) {
