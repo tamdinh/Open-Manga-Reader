@@ -49,6 +49,46 @@ class UrlUtils {
     return clean;
   }
 
+  /// Chapter pages come with a signed link (`...?e=<expiry unix seconds>&s=<signature>`, valid ~2-3 hours).
+  static bool isSignedUrl(String url) => signedUrlExpiry(url) != null;
+
+  /// Expiry of a signed link, or null when the URL is not signed.
+  static DateTime? signedUrlExpiry(String url) {
+    final i = url.indexOf('?');
+    if (i < 0) return null;
+    for (final p in url.substring(i + 1).split('&')) {
+      if (p.startsWith('e=')) {
+        final seconds = int.tryParse(p.substring(2));
+        if (seconds != null) {
+          return DateTime.fromMillisecondsSinceEpoch(seconds * 1000, isUtc: true);
+        }
+      }
+    }
+    return null;
+  }
+
+  static bool isSignedUrlExpired(
+    String url, {
+    Duration slack = const Duration(minutes: 1),
+  }) {
+    final expiry = signedUrlExpiry(url);
+    return expiry != null && !expiry.isAfter(DateTime.now().toUtc().add(slack));
+  }
+
+  /// Key an image is cached under: the URL without the signature (`e`, `s`). The link is renewed every hour, the
+  /// picture is the same, so it must keep hitting the cache. Unsigned URLs are returned unchanged.
+  static String cacheKey(String url) {
+    final i = url.indexOf('?');
+    if (i < 0) return url;
+    final kept = url
+        .substring(i + 1)
+        .split('&')
+        .where((p) => p.isNotEmpty && !p.startsWith('e=') && !p.startsWith('s='))
+        .toList();
+    final base = url.substring(0, i);
+    return kept.isEmpty ? base : '$base?${kept.join('&')}';
+  }
+
   static String sanitizeImageUrl(String url) {
     final trimmed = url.trim();
     if (trimmed.isEmpty) return trimmed;

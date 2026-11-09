@@ -24,6 +24,10 @@ class AppNetworkImage extends StatefulWidget {
   final ValueChanged<double>? onAspectRatioResolved;
   final String? debugLabel;
 
+  /// Called once per URL when a signed page link answers 403 (expired): the owner fetches the chapter again
+  /// and passes the new link as [imageUrl].
+  final VoidCallback? onLinkExpired;
+
   const AppNetworkImage({
     super.key,
     required this.imageUrl,
@@ -41,6 +45,7 @@ class AppNetworkImage extends StatefulWidget {
     this.memCacheHeight,
     this.onAspectRatioResolved,
     this.debugLabel,
+    this.onLinkExpired,
   });
 
   @override
@@ -53,9 +58,13 @@ class AppNetworkImageState extends State<AppNetworkImage> {
   bool _aspectRatioReported = false;
   bool _disableMemCache = false;
   bool _isAvifFallback = false;
+  bool _linkExpiredReported = false;
   Key _imageKey = UniqueKey();
 
   String get _effectiveImageUrl => UrlUtils.sanitizeImageUrl(widget.imageUrl);
+
+  /// Cache key without the signature, so a renewed link still hits the cache.
+  String get _cacheKey => UrlUtils.cacheKey(_effectiveImageUrl);
 
   @override
   void didUpdateWidget(covariant AppNetworkImage oldWidget) {
@@ -66,8 +75,14 @@ class AppNetworkImageState extends State<AppNetworkImage> {
       _aspectRatioReported = false;
       _disableMemCache = false;
       _isAvifFallback = false;
+      _linkExpiredReported = false;
       _imageKey = UniqueKey();
     }
+  }
+
+  bool _isForbidden(Object error) {
+    if (error is fcm.HttpExceptionWithStatus) return error.statusCode == 403;
+    return error.toString().contains('403');
   }
 
   bool _isNetworkError(Object error) {
@@ -127,17 +142,18 @@ class AppNetworkImageState extends State<AppNetworkImage> {
         try {
           await CachedNetworkImage.evictFromCache(
             url,
-            cacheKey: url,
+            cacheKey: _cacheKey,
           ).timeout(const Duration(seconds: 2));
         } catch (_) {}
         try {
           await fcm.DefaultCacheManager()
-              .removeFile(url)
+              .removeFile(_cacheKey)
               .timeout(const Duration(seconds: 2));
         } catch (_) {}
         try {
           await CachedNetworkImageProvider(
             url,
+            cacheKey: _cacheKey,
             headers: widget.httpHeaders,
             maxHeight: widget.maxHeightDiskCache,
             maxWidth: widget.maxWidthDiskCache,
@@ -430,6 +446,7 @@ class AppNetworkImageState extends State<AppNetworkImage> {
     final imageWidget = CachedNetworkImage(
       key: _imageKey,
       imageUrl: url,
+      cacheKey: _cacheKey,
       httpHeaders: widget.httpHeaders,
       fit: widget.fit,
       width: widget.width,
@@ -477,6 +494,14 @@ class AppNetworkImageState extends State<AppNetworkImage> {
         if (kDebugMode) {
           debugPrint('🖼️ [IMAGE ERR] $url -> Error: $error');
         }
+        if (!_linkExpiredReported &&
+            widget.onLinkExpired != null &&
+            UrlUtils.isSignedUrl(url) &&
+            _isForbidden(error)) {
+          // The signed link is no longer valid (the app stayed open for hours): ask for new links once.
+          _linkExpiredReported = true;
+          widget.onLinkExpired!.call();
+        }
         final isNetworkErr = _isNetworkError(error);
         if (!isNetworkErr && !_isAvifFallback && _isAvifCandidate(url, error)) {
           if (mounted) {
@@ -491,6 +516,7 @@ class AppNetworkImageState extends State<AppNetworkImage> {
         try {
           CachedNetworkImageProvider(
             url,
+            cacheKey: _cacheKey,
             headers: widget.httpHeaders,
             maxHeight: widget.maxHeightDiskCache,
             maxWidth: widget.maxWidthDiskCache,
@@ -517,6 +543,7 @@ class AppNetworkImageState extends State<AppNetworkImage> {
                     try {
                       CachedNetworkImageProvider(
                         url,
+                        cacheKey: _cacheKey,
                         headers: widget.httpHeaders,
                       ).evict();
                     } catch (_) {}

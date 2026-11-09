@@ -253,12 +253,16 @@ class DownloadService {
     try {
       // 1. Fetch pages if needed
       List<ChapterPage> pages = task.chapter.pages;
-      if (pages.isEmpty) {
+      // Page links are signed and expire after a couple of hours: pages queued earlier may carry old ones.
+      var refetched = false;
+      if (pages.isEmpty ||
+          pages.any((p) => UrlUtils.isSignedUrlExpired(p.url))) {
         pages = await _apiService.getChapterPages(
           mangaId,
           chapterId,
           cancelToken: cancelToken,
         );
+        refetched = true;
       }
 
       if (pages.isEmpty) {
@@ -309,11 +313,34 @@ class DownloadService {
         } else {
           final targetUrl = _apiService.getLocalImageUrl(page.url, null);
           try {
-            await _dio.download(
-              targetUrl,
-              filePath,
-              cancelToken: cancelToken,
-            );
+            try {
+              await _dio.download(
+                targetUrl,
+                filePath,
+                cancelToken: cancelToken,
+              );
+            } on DioException catch (err) {
+              // 403 on a signed link: it expired while downloading. Ask for new links once and retry this page.
+              if (err.response?.statusCode != 403 ||
+                  !UrlUtils.isSignedUrl(page.url) ||
+                  refetched ||
+                  cancelToken.isCancelled) {
+                rethrow;
+              }
+              refetched = true;
+              final fresh = await _apiService.getChapterPages(
+                mangaId,
+                chapterId,
+                cancelToken: cancelToken,
+              );
+              if (fresh.length != pages.length) rethrow;
+              pages = fresh;
+              await _dio.download(
+                _apiService.getLocalImageUrl(pages[i].url, null),
+                filePath,
+                cancelToken: cancelToken,
+              );
+            }
           } catch (err) {
             // Try fallback URL if available
             if (page.alternateUrl != null &&

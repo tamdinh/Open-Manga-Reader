@@ -132,6 +132,19 @@ void main() {
       controller.dispose();
     });
 
+    test('refreshPageUrls does nothing without an api service (offline reader)', () async {
+      final controller = ReaderController(content: sampleContent);
+      final before = List<String>.of(controller.pageUrls);
+      var notified = 0;
+      controller.addListener(() => notified++);
+
+      await controller.refreshPageUrls();
+
+      expect(controller.pageUrls, before);
+      expect(notified, 0);
+      controller.dispose();
+    });
+
     test('overscroll notifier updates without notifying full controller', () {
       final controller = ReaderController(content: sampleContent);
       bool overscrollNotified = false;

@@ -31,6 +31,9 @@ class ReaderContentWidget extends StatefulWidget {
   final VoidCallback? onNextPage;
   final VoidCallback? onPreviousPage;
 
+  /// A signed page link expired (403). The reader fetches the chapter again and passes new [pageUrls].
+  final VoidCallback? onPageLinkExpired;
+
   const ReaderContentWidget({
     super.key,
     this.chapterId,
@@ -55,6 +58,7 @@ class ReaderContentWidget extends StatefulWidget {
     this.defaultAspectRatio = 1.4,
     this.onNextPage,
     this.onPreviousPage,
+    this.onPageLinkExpired,
   });
 
   @override
@@ -102,6 +106,7 @@ class _ReaderContentWidgetState extends State<ReaderContentWidget> {
             precacheImage(
               CachedNetworkImageProvider(
                 url,
+                cacheKey: UrlUtils.cacheKey(url),
                 headers: widget.httpHeaders,
                 maxWidth: memCacheWidth,
               ),
@@ -110,6 +115,7 @@ class _ReaderContentWidgetState extends State<ReaderContentWidget> {
                 try {
                   CachedNetworkImageProvider(
                     url,
+                    cacheKey: UrlUtils.cacheKey(url),
                     headers: widget.httpHeaders,
                     maxWidth: memCacheWidth,
                   ).evict();
@@ -209,6 +215,7 @@ class _ReaderContentWidgetState extends State<ReaderContentWidget> {
                                 width: contentWidth,
                                 child: AppNetworkImage(
                                   imageUrl: url,
+                                  onLinkExpired: widget.onPageLinkExpired,
                                   httpHeaders: widget.httpHeaders,
                                   fit: BoxFit.fitWidth,
                                   width: contentWidth,
@@ -446,6 +453,7 @@ class _ReaderContentWidgetState extends State<ReaderContentWidget> {
                       child: RepaintBoundary(
                         child: AppNetworkImage(
                           imageUrl: url,
+                          onLinkExpired: widget.onPageLinkExpired,
                           httpHeaders: widget.httpHeaders,
                           fit: BoxFit.contain,
                           debugLabel: 'P. ${index + 1}/${widget.pageUrls.length}',

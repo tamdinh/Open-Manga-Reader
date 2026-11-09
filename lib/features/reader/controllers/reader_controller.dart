@@ -8,6 +8,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../../../core/di/injection.dart';
 import '../../../core/network/manga_api_service.dart';
+import '../../../core/utils/url_utils.dart';
 import '../../../core/utils/web_fullscreen_helper.dart';
 import '../../download/services/download_service.dart';
 import '../../history/models/progression.dart';
@@ -57,6 +58,8 @@ class ReaderController extends ChangeNotifier {
   int _chapterInitialReadingTimeSeconds = 0;
   late DateTime _sessionStartTime;
   CancelToken? _chapterCancelToken;
+  bool _refreshingLinks = false;
+  DateTime _lastLinkRefresh = DateTime.fromMillisecondsSinceEpoch(0);
 
   // Getters & ValueNotifiers for isolated sub-tree rendering
   ReaderContent get content => _content;
@@ -634,6 +637,34 @@ class ReaderController extends ChangeNotifier {
       _isChangingChapter = false;
       _lastChapterChangeTime = DateTime.now();
       _safeNotifyListeners();
+    }
+  }
+
+  /// Page links are signed and live ~2-3 hours. After a 403 on a signed page (the reader stayed open), fetch the
+  /// chapter again and swap in the new links. Not for downloaded chapters; at most once per 30 seconds.
+  Future<void> refreshPageUrls() async {
+    final api = _apiService;
+    if (api == null || _refreshingLinks || _disposed) return;
+    if (DateTime.now().difference(_lastLinkRefresh) < const Duration(seconds: 30)) {
+      return;
+    }
+    if (_pageUrls.isEmpty || UrlUtils.isLocalFilePath(_pageUrls.first)) return;
+
+    _refreshingLinks = true;
+    final chapterId = _chapterId;
+    try {
+      final pages = await api.getChapterPages(_content.mangaId, chapterId);
+      // Another chapter was opened meanwhile, or the pages changed: keep what is shown.
+      if (_disposed || chapterId != _chapterId || pages.length != _pageUrls.length) {
+        return;
+      }
+      _pageUrls = pages.map((p) => api.getLocalImageUrl(p.url, null)).toList();
+      _safeNotifyListeners();
+    } catch (e) {
+      if (kDebugMode) debugPrint('Failed to refresh page links: $e');
+    } finally {
+      _lastLinkRefresh = DateTime.now();
+      _refreshingLinks = false;
     }
   }
 

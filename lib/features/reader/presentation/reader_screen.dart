@@ -1020,6 +1020,7 @@ class _ReaderScreenState extends State<ReaderScreen>
                     onToggleUI: _controller.toggleUI,
                     onNextPage: _goToNextPagedPage,
                     onPreviousPage: _goToPreviousPagedPage,
+                    onPageLinkExpired: _controller.refreshPageUrls,
                   ),
                 ),
               ),
