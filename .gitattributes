@@ -1,0 +1,23 @@
+# Line endings: Git stores LF; each machine checks files out with its own convention.
+* text=auto
+
+# Linux scripts must keep LF (Docker, bash on servers)
+*.sh text eol=lf
+
+# Windows scripts must keep CRLF
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files are never converted
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.gif binary
+*.ico binary
+*.dll binary
+*.so binary
+*.wasm binary
+*.dat binary
+*.pdf binary
