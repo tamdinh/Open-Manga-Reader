@@ -89,6 +89,9 @@ class MangaApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          if (AppConfig.contentChannel.isNotEmpty) {
+            options.headers["X-Content-Channel"] = AppConfig.contentChannel;
+          }
           if (_jwtToken != null) {
             options.headers['Authorization'] = 'Bearer $_jwtToken';
           }

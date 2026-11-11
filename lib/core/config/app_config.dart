@@ -7,6 +7,10 @@ class AppConfig {
     defaultValue: 'http://localhost:5126',
   );
 
+  /// Content channel of this build (e.g. --dart-define=CONTENT_CHANNEL=reader-kids-en). Sent as X-Content-Channel so the
+  /// API shows only what the channel allows. Empty = no channel (everything).
+  static const String contentChannel = String.fromEnvironment('CONTENT_CHANNEL', defaultValue: '');
+
   static String _baseUrl = _defaultBaseUrl;
 
   static String get baseUrl => _baseUrl;

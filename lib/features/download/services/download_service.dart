@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/di/injection.dart';
 import '../../../core/models/chapter_page.dart';
 import '../../../core/network/manga_api_service.dart';
@@ -56,6 +57,9 @@ class DownloadService {
               BaseOptions(
                 connectTimeout: const Duration(seconds: 30),
                 receiveTimeout: const Duration(seconds: 45),
+                headers: AppConfig.contentChannel.isEmpty
+                    ? null
+                    : {'X-Content-Channel': AppConfig.contentChannel},
               ),
             );
 
